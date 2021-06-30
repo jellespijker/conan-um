@@ -1,0 +1,9 @@
+include(default_clang_17)
+
+[settings]
+build_type=Release
+
+[options]
+[build_requires]
+[env]
+ 

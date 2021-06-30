@@ -1,0 +1,9 @@
+include(default_clang_11)
+
+[settings]
+build_type=Debug
+
+[options]
+[build_requires]
+[env]
+ 

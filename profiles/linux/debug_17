@@ -1,0 +1,8 @@
+include(default_17)
+
+[settings]
+build_type=Debug
+
+[options]
+[build_requires]
+[env]
