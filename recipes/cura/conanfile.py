@@ -42,3 +42,4 @@ class CuraConan(ConanFile):
         self.requires(f"pynest2d/{self.version}@ultimaker/testing")
         self.requires(f"Savitar/{self.version}@ultimaker/testing")
         self.requires(f"Uranium/{self.version}@ultimaker/testing")
+        self.requires(f"CuraEngine/{self.version}@ultimaker/testing")
