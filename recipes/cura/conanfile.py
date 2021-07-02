@@ -32,6 +32,7 @@ class CuraConan(ConanFile):
 
     def configure(self):
         self.options["Arcus"].python_version = self.options.python_version
+        self.options["Charon"].python_version = self.options.python_version
         self.options["Savitar"].python_version = self.options.python_version
         self.options["Uranium"].python_version = self.options.python_version
         self.options["pynest2d"].python_version = self.options.python_version
