@@ -38,9 +38,10 @@ def setup_cura(args):
         conanbuildinfo = json.loads(f.read())
 
     site_packages = conanbuildinfo["deps_env_info"]["PYTHONPATH"]
-    for site_package in site_packages:
-        print(f"Copying: {site_package} into: {site_package_path}")
-        copytree(site_package, site_package_path)
+    pythonpath = ":".join(site_packages)
+    # for site_package in site_packages:
+    #     print(f"Copying: {site_package} into: {site_package_path}")
+    #     copytree(site_package, site_package_path)
 
     paths = []
     for dep in conanbuildinfo["dependencies"]:
@@ -54,8 +55,9 @@ def setup_cura(args):
     with open(os.path.join(venv_path, "bin", "activate"), "r") as f:
         content = f.read()
     if "CONAN_PATH" in content:
-        conent = content.splitlines()[1:]
+        conent = content.splitlines()[2:]
     content_new = f"CONAN_PATH={conan_paths}\n"
+    content_new += f"export PYTHONPATH={pythonpath}\n"
     content_new += content.replace(r"VIRTUAL_ENV/bin:$PATH", r"VIRTUAL_ENV/bin:\$PATH:$CONAN_PATH")
     with open(os.path.join(venv_path, "bin", "activate"), "w") as f:
         f.write(content_new)

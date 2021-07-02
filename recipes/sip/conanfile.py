@@ -15,8 +15,14 @@ class SipConan(ConanFile):
     homepage = "https://www.riverbankcomputing.com/software/sip/"
     url = f"https://www.riverbankcomputing.com/static/Downloads/sip"
     settings = "os", "compiler", "build_type", "arch"
-    options = {'shared': [True, False]}
-    default_options = {"shared": False}
+    options = {
+        "shared": [True, False],
+        "python_version": "ANY"
+    }
+    default_options = {
+        "shared": True,
+        "python_version": "3.8"
+    }
     generators = "txt"
     exports_sources = ["SIPMacros.cmake"]
     _source_subfolder = "sip-src"
@@ -33,19 +39,18 @@ class SipConan(ConanFile):
         bindir = os.path.join(self.build_folder, "bin")
         destdir = os.path.join(self.build_folder, "site-packages")
         incdir = os.path.join(self.build_folder, "include")
-        sipdir = os.path.join(self.build_folder, "sip")
-        pyidir = os.path.join(self.build_folder, "site-packages", "PyQt5")
+        pyidir = os.path.join(self.build_folder, "site-packages")
         if self.settings.compiler == "Visual Studio":
             env_build = VisualStudioBuildEnvironment(self)
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
                 with tools.environment_append(env_build.vars):
                     vcvars = tools.vcvars_command(self.settings)
-                    self.run(f"{vcvars} && python configure.py --sip-module=PyQt5.sip {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --bindir={bindir} --destdir={destdir} --incdir={incdir} --sipdir={sipdir} --pyidir={pyidir}")
+                    self.run(f"{vcvars} && python{self.options.python_version} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
                     self.run(f"{vcvars} && nmake")
                     self.run(f"{vcvars} && nmake install")
         else:
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-                self.run(f"python configure.py --sip-module=PyQt5.sip {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --bindir={bindir} --destdir={destdir} --incdir={incdir} --sipdir={sipdir} --pyidir={pyidir}")
+                self.run(f"python{self.options.python_version} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
                 self.run(f"make")
                 self.run(f"make install")
 

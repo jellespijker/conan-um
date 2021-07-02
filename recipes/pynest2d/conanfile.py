@@ -38,6 +38,9 @@ class pynest2dConan(ConanFile):
 
     _cmake = None
 
+    def configure(self):
+        self.options["sip"].python_version = self.options.python_version
+
     def requirements(self):
         self.requires("SIP/4.19.25@ultimaker/testing")
         self.requires(f"libnest2d/{self.version}@ultimaker/testing")

@@ -40,6 +40,9 @@ class SavitarConan(ConanFile):
 
     _cmake = None
 
+    def configure(self):
+        self.options["sip"].python_version = self.options.python_version
+
     def build_requirements(self):
         if self.options.tests:
             self.build_requires("gtest/1.10.0")

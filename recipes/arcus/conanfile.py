@@ -37,6 +37,9 @@ class ArcusConan(ConanFile):
 
     _cmake = None
 
+    def configure(self):
+        self.options["sip"].python_version = self.options.python_version
+
     def requirements(self):
         self.requires("SIP/4.19.25@ultimaker/testing")
         self.requires("protobuf/3.17.1")
@@ -44,6 +47,8 @@ class ArcusConan(ConanFile):
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(arcus)", """project(arcus)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.4 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(Arcus PUBLIC ${PROTOBUF_LIBRARIES})", "target_link_libraries(Arcus PUBLIC protobuf::protobuf)")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "add_sip_python_module(Arcus python/Socket.sip Arcus)", "add_sip_python_module(Arcus python/Socket.sip Arcus protobuf::protobuf)")
 
     def configure(self):
         if self.settings.compiler == 'Visual Studio':
@@ -75,7 +80,6 @@ class ArcusConan(ConanFile):
             else:
                 self._cmake = self._configure_cmake()
                 self._cmake.build()
-
                 self._cmake.install()
 
     def package(self):
