@@ -86,7 +86,6 @@ class SavitarConan(ConanFile):
             else:
                 self._cmake = self._configure_cmake()
                 self._cmake.build()
-
                 self._cmake.install()
 
     def package(self):

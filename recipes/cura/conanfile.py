@@ -14,7 +14,7 @@ class CuraConan(ConanFile):
     description = "3D printer / slicing GUI built on top of the Uranium framework"
     topics = ("conan", "python", "pyqt5", "qt", "qml", "3d-printing", "slicer")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "virtualenv_python"
+    generators = "virtualenv_ultimaker", "pycharm_run"
     options = {
         "python_version": "ANY"
     }
@@ -38,9 +38,11 @@ class CuraConan(ConanFile):
         self.options["pynest2d"].python_version = self.options.python_version
 
     def requirements(self):
+        self.requires("virtualenv_ultimaker_gen/0.1@ultimaker/testing")
+        self.requires("pycharm_run_gen/0.1@ultimaker/testing")
         self.requires(f"Arcus/{self.version}@ultimaker/testing")
         self.requires(f"Charon/{self.version}@ultimaker/testing")
         self.requires(f"pynest2d/{self.version}@ultimaker/testing")
         self.requires(f"Savitar/{self.version}@ultimaker/testing")
         self.requires(f"Uranium/{self.version}@ultimaker/testing")
-        # self.requires(f"CuraEngine/{self.version}@ultimaker/testing")
+        self.requires(f"CuraEngine/CURA-5990_cpp17@ultimaker/testing")
