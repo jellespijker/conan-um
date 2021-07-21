@@ -14,7 +14,6 @@ class UraniumConan(ConanFile):
     description = "A Python framework for building Desktop applications."
     topics = ("conan", "python", "pyqt5", "qt", "3d-graphics", "3d-models", "python-framework")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "virtualrunenv"
     options = {
         "python_version": "ANY"
     }
@@ -39,6 +38,8 @@ class UraniumConan(ConanFile):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(uranium NONE)", "project(uranium NONE)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(PythonInterp 3 REQUIRED)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter)""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "install(DIRECTORY UM DESTINATION lib${LIB_SUFFIX}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages)", "install(DIRECTORY UM DESTINATION site-packages)")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "cmake", "UraniumPluginInstall.cmake"), "find_package(Python3 REQUIRED COMPONENTS Interpreter)", "install(DIRECTORY UM DESTINATION site-packages)", f"find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter)")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "cmake", "UraniumPluginInstall.cmake"), "DESTINATION lib${LIB_SUFFIX}/uranium/${_rel_plugin_parent_dir}", "DESTINATION site-packages/${_rel_plugin_parent_dir}")
 
     def _configure_cmake(self, visual_studio = False):
         if self._cmake:
@@ -68,8 +69,8 @@ class UraniumConan(ConanFile):
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("*", src = os.path.join("package", "site-packages"), dst = "site-packages")
-        self.copy("*", src = os.path.join("package", "lib", "uranium"), dst = os.path.join("lib", "uranium"))
-        self.copy("*", src = os.path.join("package", "share", "uranium"), dst = os.path.join("share", "uranium"))
+        self.copy("*", src = os.path.join("package", "lib", "uranium"), dst = os.path.join("site-packages"))
+        self.copy("*", src = os.path.join("package", "share"), dst = os.path.join("share"))
 
     def package_info(self):
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
