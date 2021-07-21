@@ -43,6 +43,7 @@ deactivate () {
     unset DYLD_LIBRARY_PATH
     unset LD_LIBRARY_PATH
     unset PYTHONUNBUFFERED
+    unset CURAENGINEPATH
 }
 
 # unset irrelevant variables
@@ -50,6 +51,7 @@ deactivate nondestructive
 
 export CONAN_OLD_PATH="$PATH"
 export CONAN_OLD_PYTHONPATH="$PYTHONPATH"
+export CURAENGINEPATH=""
 
 BASEDIR=""
 

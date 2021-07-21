@@ -1,6 +1,7 @@
 from conans.client.generators.virtualenv_python import VirtualEnvPythonGenerator
 from conans import ConanFile
 import pathlib
+import os
 
 class pycharm_run(VirtualEnvPythonGenerator):
     venv_name = "ultimaker"
@@ -15,6 +16,7 @@ class pycharm_run(VirtualEnvPythonGenerator):
         LD_LIBRARY_PATH = ":".join(self.env['LD_LIBRARY_PATH'])
         PATH = ":".join(self.env['PATH'])
         PYTHONPATH = ":".join(self.env['PYTHONPATH'])
+        CURAENGINEPATH = os.path.join(self.conanfile.dependencies["CuraEngine"].package_folder, "bin", "CuraEngine")
         run_name = f"{self.conanfile.name}.run.xml"
         # how to handle <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cura_app.py" />
         with open(pathlib.Path(__file__).parent.resolve().joinpath("pycharm.run.xml"), "r") as f:
@@ -24,6 +26,7 @@ class pycharm_run(VirtualEnvPythonGenerator):
             result[run_name] = result[run_name].replace("<env name=\"LD_LIBRARY_PATH\" value=\"\" />", f"<env name=\"LD_LIBRARY_PATH\" value=\"{LD_LIBRARY_PATH}\" />")
             result[run_name] = result[run_name].replace("<env name=\"PATH\" value=\"\" />", f"<env name=\"PATH\" value=\"{PATH}\" />")
             result[run_name] = result[run_name].replace("<env name=\"PYTHONPATH\" value=\"\" />", f"<env name=\"PYTHONPATH\" value=\"{PYTHONPATH}\" />")
+            result[run_name] = result[run_name].replace("<env name=\"CURAENGINEPATH\" value=\"\" />", f"<env name=\"CURAENGINEPATH\" value=\"{CURAENGINEPATH}\" />")
         return result
 
 

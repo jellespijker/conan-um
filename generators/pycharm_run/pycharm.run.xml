@@ -10,6 +10,7 @@
       <env name="LD_LIBRARY_PATH" value="" />
       <env name="PATH" value="" />
       <env name="PYTHONPATH" value="" />
+      <env name="CURAENGINEPATH" value="" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
