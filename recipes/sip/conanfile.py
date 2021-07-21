@@ -23,11 +23,8 @@ class SipConan(ConanFile):
         "shared": True,
         "python_version": "3.8"
     }
-    generators = "txt"
     exports_sources = ["SIPMacros.cmake"]
     _source_subfolder = "sip-src"
-
-    _autotools = None
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
@@ -35,7 +32,7 @@ class SipConan(ConanFile):
         tools.remove_files_by_mask
 
     def build(self):
-        static_arg = "--static" if not self.options.shared else ""
+        static_arg = "--static " if not self.options.shared else ""
         bindir = os.path.join(self.build_folder, "bin")
         destdir = os.path.join(self.build_folder, "site-packages")
         incdir = os.path.join(self.build_folder, "include")
@@ -45,12 +42,12 @@ class SipConan(ConanFile):
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
                 with tools.environment_append(env_build.vars):
                     vcvars = tools.vcvars_command(self.settings)
-                    self.run(f"{vcvars} && python{self.options.python_version} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
+                    self.run(f"{vcvars} && python{self.options.python_version} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir}")
                     self.run(f"{vcvars} && nmake")
                     self.run(f"{vcvars} && nmake install")
         else:
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-                self.run(f"python{self.options.python_version} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
+                self.run(f"python{self.options.python_version} configure.py {static_arg}--bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir}")
                 self.run(f"make")
                 self.run(f"make install")
 
@@ -62,6 +59,8 @@ class SipConan(ConanFile):
         self.copy("*", "lib", "lib")
         self.copy("*", src="site-packages", dst="site-packages")
         self.copy("*.h", src="include", dst="include")
+        sip_executable = os.path.join(self.package_folder, "bin", "sip")
+        tools.replace_in_file(os.path.join(self.source_folder, "SIPMacros.cmake"), "SET(SIP_EXECUTABLE \"\")", f"SET(SIP_EXECUTABLE \"{sip_executable}\")")
         self.copy("SIPMacros.cmake", ".", ".")
 
     def package_info(self):

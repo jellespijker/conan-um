@@ -14,7 +14,6 @@ class CharonConan(ConanFile):
     description = "File metadata and streaming library"
     topics = ("conan", "python", "cura", "ufp")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "virtualrunenv"
     options = {
         "python_version": "ANY"
     }
@@ -58,7 +57,6 @@ class CharonConan(ConanFile):
             else:
                 self._cmake = self._configure_cmake()
                 self._cmake.build()
-
                 self._cmake.install()
 
     def package(self):

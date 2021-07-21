@@ -14,20 +14,16 @@ class pynest2dConan(ConanFile):
     description = "Python bindings for libnest2d"
     topics = ("conan", "cura", "prusaslicer", "nesting", "c++", "bin packaging", "python", "sip")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "virtualrunenv", "cmake_find_package"
+    generators = "cmake_find_package"
     options = {
         "shared": [True, False],
-        "python": [True, False],
-        "examples": [True, False],
         "python_version": "ANY"
     }
     default_options = {
-        "shared": True,
-        "python": True,
-        "examples": False,
+        "shared": False,
         "python_version": "3.8"
     }
-    _source_subfolder = "arcus-src"
+    _source_subfolder = "pynest2d-src"
 
     scm = {
         "type": "git",
@@ -38,9 +34,6 @@ class pynest2dConan(ConanFile):
 
     _cmake = None
 
-    def configure(self):
-        self.options["sip"].python_version = self.options.python_version
-
     def requirements(self):
         self.requires("SIP/4.19.25@ultimaker/testing")
         self.requires(f"libnest2d/{self.version}@ultimaker/testing")
@@ -48,12 +41,13 @@ class pynest2dConan(ConanFile):
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(pynest2d)", """project(pynest2d)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.5 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), """find_package(Clipper REQUIRED)  # Dependency of libnest2d.
-find_package(NLopt REQUIRED)  # Dependency of libnest2d.
-find_package(Boost REQUIRED)  # Dependency of libnest2d.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLIBNEST2D_GEOMETRIES_clipper -DLIBNEST2D_OPTIMIZERS_nlopt -DLIBNEST2D_THREADING_std")  # Tell libnest2d to use Clipper and NLopt, and standard threads.""", "")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Clipper", "find_package(polyclipping")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), """include_directories(src/ ${SIP_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${CLIPPER_INCLUDE_DIRS} ${NLopt_INCLUDE_DIRS} ${LIBNEST2D_INCLUDE_DIRS})
+add_sip_python_module(pynest2d src/Pynest2D.sip ${CLIPPER_LIBRARIES} ${NLopt_LIBRARIES})""", """include_directories(src/ ${SIP_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${polyclipping_INCLUDE_DIRS} ${NLopt_INCLUDE_DIRS} ${libnest2d_INCLUDE_DIRS})
+add_sip_python_module(pynest2d src/Pynest2D.sip ${polyclipping_LIBRARIES} ${NLopt_LIBRARIES})""")
 
     def configure(self):
+        self.options["SIP"].python_version = self.options.python_version
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 
@@ -64,9 +58,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLIBNEST2D_GEOMETRIES_clipper -DLIBNEST
             self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
         else:
             self._cmake = CMake(self)
-        self._cmake.definitions["BUILD_PYTHON"] = self.options.python
-        self._cmake.definitions["BUILD_STATIC"] = not self.options.shared
-        self._cmake.definitions["BUILD_EXAMPLES"] = self.options.examples
         self._cmake.definitions["SIP_MODULE_SITE_PATH"] = os.path.join(self.build_folder, "site-packages")
         self._cmake.configure(source_folder = self._source_subfolder)
         return self._cmake

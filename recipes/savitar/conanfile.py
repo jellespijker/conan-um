@@ -23,7 +23,7 @@ class SavitarConan(ConanFile):
         "python_version": "ANY"
     }
     default_options = {
-        "shared": True,
+        "shared": False,
         "python": True,
         "tests": False,
         "extern_pugixml": True,
@@ -39,9 +39,6 @@ class SavitarConan(ConanFile):
     }
 
     _cmake = None
-
-    def configure(self):
-        self.options["sip"].python_version = self.options.python_version
 
     def build_requirements(self):
         if self.options.tests:
@@ -59,6 +56,7 @@ class SavitarConan(ConanFile):
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "add_subdirectory(pugixml)", "")
 
     def configure(self):
+        self.options["SIP"].python_version = self.options.python_version
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 

@@ -32,9 +32,6 @@ class UraniumConan(ConanFile):
 
     _cmake = None
 
-    def build_requirements(self):
-        self.build_requires("doxygen/1.9.1")
-
     def requirements(self):
         self.requires(f"Arcus/{self.version}@ultimaker/testing")
 
@@ -76,7 +73,6 @@ class UraniumConan(ConanFile):
 
     def package_info(self):
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
-        self.env_info.PYTHONBUFFERED.append("1")
 
     def package_id(self):
         self.info.header_only()

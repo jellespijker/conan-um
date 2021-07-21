@@ -13,7 +13,7 @@ class ArcusConan(ConanFile):
     description = "Communication library between internal components for Ultimaker software"
     topics = ("conan", "python", "binding", "sip", "cura", "protobuf", "c++")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake_find_package", "virtualrunenv"
+    generators = "cmake_find_package"
     options = {
         "shared": [True, False],
         "python": [True, False],
@@ -37,9 +37,6 @@ class ArcusConan(ConanFile):
 
     _cmake = None
 
-    def configure(self):
-        self.options["sip"].python_version = self.options.python_version
-
     def requirements(self):
         self.requires("SIP/4.19.25@ultimaker/testing")
         self.requires("protobuf/3.17.1")
@@ -47,10 +44,12 @@ class ArcusConan(ConanFile):
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(arcus)", """project(arcus)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.4 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Protobuf 3.0.0 REQUIRED)", f"find_package(Protobuf 3.11.4 REQUIRED)")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(Arcus PUBLIC ${PROTOBUF_LIBRARIES})", "target_link_libraries(Arcus PUBLIC protobuf::protobuf)")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "add_sip_python_module(Arcus python/Socket.sip Arcus)", "add_sip_python_module(Arcus python/Socket.sip Arcus protobuf::protobuf)")
 
     def configure(self):
+        self.options["SIP"].python_version = self.options.python_version
+        self.options["protobuf"].shared = True
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 

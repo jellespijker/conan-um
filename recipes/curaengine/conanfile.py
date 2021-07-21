@@ -53,14 +53,12 @@ class libnest2dConan(ConanFile):
             self.requires("rapidjson/1.1.0")
 
     def source(self):
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(CuraEngine)", """project(CuraEngine)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
-
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(CuraEngine)", "project(CuraEngine)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Stb REQUIRED)", "find_package(stb REQUIRED)")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "include_directories(${Stb_INCLUDE_DIRS})", "include_directories(${stb_INCLUDE_DIRS})")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "src", "infill", "ImageBasedDensityProvider.cpp"), "#include <stb/stb_image.h>", "#include <stb_image.h>")
-
-        if self.options.enable_arcus:
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine Arcus)", "target_link_libraries(_CuraEngine Arcus)\n\ttarget_link_libraries(_CuraEngine protobuf::protobuf)")
+        # if self.options.enable_arcus:
+        #     tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine Arcus)", "target_link_libraries(_CuraEngine Arcus)\n\ttarget_link_libraries(_CuraEngine protobuf::protobuf)")
 
         if self.options.extern_clipper:
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Polyclipping", "find_package(polyclipping")
