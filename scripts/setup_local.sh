@@ -10,8 +10,8 @@ done
 
 gen_walker="pycharm_run virtualenv_ultimaker"
 cd ../generators
-for dep in gen_walker; do
-  cd $dep
+for gen in $gen_walker; do
+  cd $gen
   conan export . ultimaker/testing
   cd ..
 done
