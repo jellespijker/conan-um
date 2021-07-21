@@ -32,16 +32,15 @@ class CuraConan(ConanFile):
 
     def configure(self):
         self.options["Arcus"].python_version = self.options.python_version
-        # self.options["Charon"].python_version = self.options.python_version
-        # self.options["Savitar"].python_version = self.options.python_version
-        # self.options["Uranium"].python_version = self.options.python_version
-        # self.options["pynest2d"].python_version = self.options.python_version
-        # self.options["sip"].python_version = self.options.python_version
+        self.options["Charon"].python_version = self.options.python_version
+        self.options["Savitar"].python_version = self.options.python_version
+        self.options["Uranium"].python_version = self.options.python_version
+        self.options["pynest2d"].python_version = self.options.python_version
 
     def requirements(self):
         self.requires(f"Arcus/{self.version}@ultimaker/testing")
-        # self.requires(f"Charon/{self.version}@ultimaker/testing")
-        # self.requires(f"pynest2d/{self.version}@ultimaker/testing")
-        # self.requires(f"Savitar/{self.version}@ultimaker/testing")
-        # self.requires(f"Uranium/{self.version}@ultimaker/testing")
+        self.requires(f"Charon/{self.version}@ultimaker/testing")
+        self.requires(f"pynest2d/{self.version}@ultimaker/testing")
+        self.requires(f"Savitar/{self.version}@ultimaker/testing")
+        self.requires(f"Uranium/{self.version}@ultimaker/testing")
         # self.requires(f"CuraEngine/{self.version}@ultimaker/testing")

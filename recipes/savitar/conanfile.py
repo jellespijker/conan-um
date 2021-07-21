@@ -92,9 +92,9 @@ class SavitarConan(ConanFile):
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("Savitar.so", src = "site-packages", dst = "site-packages")
-        self.copy("*", src = os.path.join("package", "include", "Savitar"), dst = os.path.join("include", "Savitar"))
+        self.copy("*", src = os.path.join("package", "include"), dst = "include")
         self.copy("libSavitar.so*", src = os.path.join("package", "lib"), dst = "lib")
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include/Savitar"]
+        self.cpp_info.includedirs = ["include"]
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))

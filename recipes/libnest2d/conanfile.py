@@ -111,8 +111,8 @@ class libnest2dConan(ConanFile):
 
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
-        self.copy("*", src = os.path.join("package", "include", "libnest2d"), dst = os.path.join("include", "libnest2d"))
+        self.copy("*", src = os.path.join("package", "include"), dst = "include")
         self.copy("libnest2d_*.*", src = os.path.join("package", "lib"), dst = "lib")
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include/libnest2d"]
+        self.cpp_info.includedirs = ["include"]

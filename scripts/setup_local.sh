@@ -7,4 +7,3 @@ for dep in $dep_walker; do
   conan create . ultimaker/testing --build=missing -pr=release_17
   cd ..
 done
-cd recipes

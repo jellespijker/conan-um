@@ -84,9 +84,9 @@ class ArcusConan(ConanFile):
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("Arcus.so", src = "site-packages", dst = "site-packages")
-        self.copy("*", src = os.path.join("package", "include", "Arcus"), dst = os.path.join("include", "Arcus"))
+        self.copy("*", src = os.path.join("package", "include"), dst = "include")
         self.copy("libArcus.so*", src = os.path.join("package", "lib"), dst = "lib")
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include/Arcus"]
+        self.cpp_info.includedirs = ["include"]
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
