@@ -16,8 +16,10 @@ class pycharm_run(VirtualEnvPythonGenerator):
         PATH = ":".join(self.env['PATH'])
         PYTHONPATH = ":".join(self.env['PYTHONPATH'])
         run_name = f"{self.conanfile.name}.run.xml"
-        with open(pathlib.Path(__file__).parent.resolve().joinpath("cura_app.run.xml"), "r") as f:
+        # how to handle <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cura_app.py" />
+        with open(pathlib.Path(__file__).parent.resolve().joinpath("pycharm.run.xml"), "r") as f:
             result[run_name] = f.read()
+            result[run_name] = result[run_name].replace("name=\"\"", f"name=\"{self.conanfile.name}\"")
             result[run_name] = result[run_name].replace("<env name=\"DYLD_LIBRARY_PATH\" value=\"\" />", f"<env name=\"DYLD_LIBRARY_PATH\" value=\"{DYLD_LIBRARY_PATH}\" />")
             result[run_name] = result[run_name].replace("<env name=\"LD_LIBRARY_PATH\" value=\"\" />", f"<env name=\"LD_LIBRARY_PATH\" value=\"{LD_LIBRARY_PATH}\" />")
             result[run_name] = result[run_name].replace("<env name=\"PATH\" value=\"\" />", f"<env name=\"PATH\" value=\"{PATH}\" />")
@@ -30,7 +32,7 @@ class VirtualEnvUMGeneratorPackage(ConanFile):
     version = "0.1"
     url = "https://github.com/jellespijker/conan-um"
     license = "LGPL-3.0"
-    exports = ["cura_app.run.xml"]
+    exports = ["pycharm.run.xml"]
 
     def package(self):
-        self.copy("cura_app.run.xml", ".", ".")
+        self.copy("pycharm.run.xml", ".", ".")

@@ -1,7 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="cura_app" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+  <configuration default="false" name="" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
     <output_file path="$PROJECT_DIR$/cura.log" is_save="true" />
-    <log_file alias="master_log" path="$USER_HOME$/.local/share/cura/master/cura.log" />
     <module name="Cura" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
