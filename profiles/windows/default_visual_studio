@@ -6,4 +6,5 @@ compiler.version=16
 compiler.toolset=v142
 compiler.runtime=MD
 [env]
-CONAN_CMAKE_MAKE_PROGRAM=nmake
+CC=cl.exe
+CXX=cl.exe

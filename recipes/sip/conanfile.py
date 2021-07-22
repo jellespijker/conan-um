@@ -39,11 +39,10 @@ class SipConan(ConanFile):
         if self.settings.compiler == "Visual Studio":
             env_build = VisualStudioBuildEnvironment(self)
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-                with tools.environment_append(env_build.vars):
-                    vcvars = tools.vcvars_command(self.settings)
-                    self.run(f"{vcvars} && python configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
-                    self.run(f"{vcvars} && nmake")
-                    self.run(f"{vcvars} && nmake install")
+                with tools.vcvars(self):
+                    self.run(f"python configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
+                    self.run(f"nmake")
+                    self.run(f"nmake install")
         else:
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
                 self.run(f"python{self.options.python_version} configure.py {static_arg}--bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir}")
@@ -62,6 +61,7 @@ class SipConan(ConanFile):
         sip_executable = str(os.path.join(self.package_folder, "bin", "sip"))
         if self.settings.os == "Windows":
             sip_executable += ".exe"
+            sip_executable =sip_executable.replace("\\", "\\\\")
         tools.replace_in_file(os.path.join(self.package_folder, "SIPMacros.cmake"), "SET(SIP_EXECUTABLE \"\")", f"SET(SIP_EXECUTABLE \"{sip_executable}\")")
 
     def package_info(self):

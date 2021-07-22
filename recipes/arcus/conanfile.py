@@ -53,11 +53,14 @@ class ArcusConan(ConanFile):
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 
-    def _configure_cmake(self, visual_studio = False):
+    def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if visual_studio:
-            self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
+        if self.settings.compiler == "Visual Studio":
+            env_build = VisualStudioBuildEnvironment(self)
+            with tools.environment_append(env_build.vars):
+                vcvars = tools.vcvars_command(self.settings)
+                self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
         else:
             self._cmake = CMake(self)
         self._cmake.definitions["BUILD_PYTHON"] = self.options.python
@@ -70,10 +73,13 @@ class ArcusConan(ConanFile):
     def build(self):
         with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
             if self.settings.compiler == "Visual Studio":
-                env_build = VisualStudioBuildEnvironment(self)
-                with tools.environment_append(env_build.vars):
-                    vcvars = tools.vcvars_command(self.settings)
-                    self._cmake = self._configure_cmake(visual_studio = True)
+                with tools.vcvars(self):
+                    self._cmake = CMake(self, append_vcvars=True)
+                    self._cmake.definitions["BUILD_PYTHON"] = self.options.python
+                    self._cmake.definitions["BUILD_STATIC"] = not self.options.shared
+                    self._cmake.definitions["BUILD_EXAMPLES"] = self.options.examples
+                    self._cmake.definitions["SIP_MODULE_SITE_PATH"] = os.path.join(self.build_folder, "site-packages")
+                    self._cmake.configure(source_folder=self._source_subfolder)
                     self._cmake.build()
                     self._cmake.install()
             else:
