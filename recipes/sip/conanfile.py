@@ -29,7 +29,6 @@ class SipConan(ConanFile):
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
         os.rename("sip-{}".format(self.version), self._source_subfolder)
-        tools.remove_files_by_mask
 
     def build(self):
         static_arg = "--static " if not self.options.shared else ""
@@ -42,7 +41,7 @@ class SipConan(ConanFile):
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
                 with tools.environment_append(env_build.vars):
                     vcvars = tools.vcvars_command(self.settings)
-                    self.run(f"{vcvars} && python{self.options.python_version} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir}")
+                    self.run(f"{vcvars} && python configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
                     self.run(f"{vcvars} && nmake")
                     self.run(f"{vcvars} && nmake install")
         else:
@@ -59,9 +58,11 @@ class SipConan(ConanFile):
         self.copy("*", "lib", "lib")
         self.copy("*", src="site-packages", dst="site-packages")
         self.copy("*.h", src="include", dst="include")
-        sip_executable = os.path.join(self.package_folder, "bin", "sip")
-        tools.replace_in_file(os.path.join(self.source_folder, "SIPMacros.cmake"), "SET(SIP_EXECUTABLE \"\")", f"SET(SIP_EXECUTABLE \"{sip_executable}\")")
         self.copy("SIPMacros.cmake", ".", ".")
+        sip_executable = str(os.path.join(self.package_folder, "bin", "sip"))
+        if self.settings.os == "Windows":
+            sip_executable += ".exe"
+        tools.replace_in_file(os.path.join(self.package_folder, "SIPMacros.cmake"), "SET(SIP_EXECUTABLE \"\")", f"SET(SIP_EXECUTABLE \"{sip_executable}\")")
 
     def package_info(self):
         self.env_info.path.append(os.path.join(self.package_folder, "bin"))
