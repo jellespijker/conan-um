@@ -108,3 +108,6 @@ class libnest2dConan(ConanFile):
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("CuraEngine", src = os.path.join("package", "bin"), dst = "bin")
+
+    def package_info(self):
+        self.env_info.path.append(os.path.join(self.package_folder, "bin"))
