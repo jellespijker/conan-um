@@ -42,20 +42,22 @@ class pynest2dConan(ConanFile):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(pynest2d)", """project(pynest2d)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.5 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Clipper", "find_package(polyclipping")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), """include_directories(src/ ${SIP_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${CLIPPER_INCLUDE_DIRS} ${NLopt_INCLUDE_DIRS} ${LIBNEST2D_INCLUDE_DIRS})
-add_sip_python_module(pynest2d src/Pynest2D.sip ${CLIPPER_LIBRARIES} ${NLopt_LIBRARIES})""", """include_directories(src/ ${SIP_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${polyclipping_INCLUDE_DIRS} ${NLopt_INCLUDE_DIRS} ${libnest2d_INCLUDE_DIRS})
-add_sip_python_module(pynest2d src/Pynest2D.sip ${polyclipping_LIBRARIES} ${NLopt_LIBRARIES})""")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "CLIPPER_INCLUDE_DIRS", "polyclipping_INCLUDE_DIRS")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "CLIPPER_LIBRARIES", "polyclipping_LIBRARIES")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "LIBNEST2D_INCLUDE_DIRS", "libnest2d_INCLUDE_DIRS")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "src/ ${SIP_INCLUDE_DIRS}", "src/ ${SIP_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}")
 
     def configure(self):
         self.options["SIP"].python_version = self.options.python_version
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 
-    def _configure_cmake(self, visual_studio = False):
+    def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if visual_studio:
-            self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
+        if self.settings.compiler == "Visual Studio":
+            with tools.vcvars(self):
+                self._cmake = CMake(self, append_vcvars = True)
         else:
             self._cmake = CMake(self)
         self._cmake.definitions["SIP_MODULE_SITE_PATH"] = os.path.join(self.build_folder, "site-packages")
@@ -64,21 +66,10 @@ add_sip_python_module(pynest2d src/Pynest2D.sip ${polyclipping_LIBRARIES} ${NLop
 
     def build(self):
         with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            if self.settings.compiler == "Visual Studio":
-                env_build = VisualStudioBuildEnvironment(self)
-                with tools.environment_append(env_build.vars):
-                    vcvars = tools.vcvars_command(self.settings)
-                    self._cmake = self._configure_cmake(visual_studio = True)
-                    self._cmake.build()
-                    self._cmake.install()
-            else:
-                self._cmake = self._configure_cmake()
-                self._cmake.build()
-                self._cmake.install()
+            self._cmake = self._configure_cmake()
+            self._cmake.build()
+            self._cmake.install()
 
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
-        self.copy("pynest2d.so", src = "site-packages", dst = "site-packages")
-
-    def package_info(self):
-        self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
+        self.copy("pynest2d.*", src = "site-packages", dst = "site-packages")

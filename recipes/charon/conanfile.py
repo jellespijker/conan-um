@@ -20,7 +20,7 @@ class CharonConan(ConanFile):
     default_options = {
         "python_version": "3.8"
     }
-    _source_subfolder = "sharon-src"
+    _source_subfolder = "charon-src"
 
     scm = {
         "type": "git",
@@ -34,11 +34,12 @@ class CharonConan(ConanFile):
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "set(CHARON_INSTALL_PATH lib${LIB_SUFFIX}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages)", "set(CHARON_INSTALL_PATH site-packages)")
 
-    def _configure_cmake(self, visual_studio = False):
+    def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if visual_studio:
-            self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
+        if self.settings.compiler == "Visual Studio":
+            with tools.vcvars(self):
+                self._cmake = CMake(self, append_vcvars = True)
         else:
             self._cmake = CMake(self)
         self._cmake.definitions["CURA_PYTHON_VERSION"] = self.options.python_version
@@ -47,17 +48,9 @@ class CharonConan(ConanFile):
 
     def build(self):
         with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            if self.settings.compiler == "Visual Studio":
-                env_build = VisualStudioBuildEnvironment(self)
-                with tools.environment_append(env_build.vars):
-                    vcvars = tools.vcvars_command(self.settings)
-                    self._cmake = self._configure_cmake(visual_studio = True)
-                    self._cmake.build()
-                    self._cmake.install()
-            else:
-                self._cmake = self._configure_cmake()
-                self._cmake.build()
-                self._cmake.install()
+            self._cmake = self._configure_cmake()
+            self._cmake.build()
+            self._cmake.install()
 
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)

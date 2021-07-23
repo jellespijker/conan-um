@@ -1,3 +1,7 @@
+[build_requires]
+mingw_installer/1.0@conan/stable
+mingw-w64/8.1
+
 [settings]
 os_build=Windows
 os=Windows
@@ -7,10 +11,6 @@ compiler=gcc
 compiler.version=8.1
 compiler.libcxx=libstdc++11
 compiler.threads=posix
+compiler.cppstd=17
 compiler.exception=seh
 build_type=Release
-[options]
-[build_requires]
-mingw_installer/1.0@conan/stable
-msys2/20190524
-[env]

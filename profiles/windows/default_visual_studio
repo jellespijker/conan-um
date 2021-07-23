@@ -1,0 +1,10 @@
+include(default)
+
+[settings]
+compiler=Visual Studio
+compiler.version=16
+compiler.toolset=v142
+compiler.runtime=MD
+[env]
+CC=cl.exe
+CXX=cl.exe

@@ -1,0 +1,4 @@
+include(default_visual_studio_14)
+
+[settings]
+build_type=Release

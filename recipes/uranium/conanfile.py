@@ -45,27 +45,16 @@ class UraniumConan(ConanFile):
     def _configure_cmake(self, visual_studio = False):
         if self._cmake:
             return self._cmake
-        if visual_studio:
-            self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
-        else:
-            self._cmake = CMake(self)
+        self._cmake = CMake(self)
         self._cmake.definitions["CURA_PYTHON_VERSION"] = self.options.python_version
         self._cmake.configure(source_folder = self._source_subfolder)
         return self._cmake
 
     def build(self):
         with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            if self.settings.compiler == "Visual Studio":
-                env_build = VisualStudioBuildEnvironment(self)
-                with tools.environment_append(env_build.vars):
-                    vcvars = tools.vcvars_command(self.settings)
-                    self._cmake = self._configure_cmake(visual_studio = True)
-                    self._cmake.build()
-                    self._cmake.install()
-            else:
-                self._cmake = self._configure_cmake()
-                self._cmake.build()
-                self._cmake.install()
+            self._cmake = self._configure_cmake()
+            self._cmake.build()
+            self._cmake.install()
 
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
