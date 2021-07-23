@@ -38,7 +38,8 @@ class ArcusConan(ConanFile):
     _cmake = None
 
     def requirements(self):
-        self.requires("SIP/4.19.25@ultimaker/testing")
+        if self.options.python:
+            self.requires("SIP/4.19.25@ultimaker/testing")
         self.requires("protobuf/3.17.1")
 
     def source(self):

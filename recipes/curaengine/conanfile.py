@@ -39,6 +39,9 @@ class libnest2dConan(ConanFile):
     _cmake = None
 
     def build_requirements(self):
+        if self.settings.os == "Windows":
+            self.build_requires("mingw_installer/1.0@conan/stable")
+            self.build_requires("mingw-w64/8.1")
         if self.options.tests:
             self.build_requires("gtest/1.10.0")
 
@@ -58,12 +61,13 @@ class libnest2dConan(ConanFile):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "include_directories(${Stb_INCLUDE_DIRS})", "include_directories(${stb_INCLUDE_DIRS})")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "src", "infill", "ImageBasedDensityProvider.cpp"), "#include <stb/stb_image.h>", "#include <stb_image.h>")
         if self.options.enable_arcus:
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine Arcus)", "target_link_libraries(_CuraEngine Arcus)\n\ttarget_link_libraries(_CuraEngine protobuf::protobuf)")
+            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine Arcus)", "target_link_libraries(_CuraEngine PUBLIC Arcus::Arcus)\n\ttarget_link_libraries(_CuraEngine PUBLIC protobuf::protobuf)")
 
         if self.options.extern_clipper:
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Polyclipping", "find_package(polyclipping")
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "include_directories(${Polyclipping_INCLUDE_DIRS}", "include_directories(${polyclipping_INCLUDE_DIRS}")
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine ${Polyclipping_LIBRARIES})", "target_link_libraries(_CuraEngine ${polyclipping_LIBRARIES})")
+            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine ${Polyclipping_LIBRARIES})", "target_link_libraries(_CuraEngine PUBLIC polyclipping::polyclipping)")
+            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine clipper)", "target_link_libraries(_CuraEngine PUBLIC polyclipping::polyclipping)")
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "src", "utils", "Coord_t.h"), "#include <clipper.hpp>", "#include <polyclipping/clipper.hpp>")
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "src", "raft.cpp"), "#include <clipper.hpp>", "#include <polyclipping/clipper.hpp>")
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "tests", "utils", "AABB3DTest.cpp"), "#include <clipper.hpp>", "#include <polyclipping/clipper.hpp>")
@@ -75,14 +79,13 @@ class libnest2dConan(ConanFile):
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "${RAPIDJSON_INCLUDE_DIRS})", "${RapidJSON_INCLUDE_DIRS})")
 
     def configure(self):
-        if self.settings.compiler == 'Visual Studio':
-            del self.options.fPIC
+        self.options["Arcus"].python = False
 
-    def _configure_cmake(self, visual_studio = False):
+    def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if visual_studio:
-            self._cmake = CMake(self, make_program = "nmake", append_vcvars = True)
+        if self.settings.os == "Windows":
+            self._cmake = CMake(self, generator = "MinGW Makefiles")
         else:
             self._cmake = CMake(self)
         self._cmake.definitions["USE_SYSTEM_LIBS"] = any((self.options.extern_clipper, self.options.extern_rapidjson))
@@ -93,17 +96,9 @@ class libnest2dConan(ConanFile):
 
     def build(self):
         with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            if self.settings.compiler == "Visual Studio":
-                env_build = VisualStudioBuildEnvironment(self)
-                with tools.environment_append(env_build.vars):
-                    vcvars = tools.vcvars_command(self.settings)
-                    self._cmake = self._configure_cmake(visual_studio = True)
-                    self._cmake.build()
-                    self._cmake.install()
-            else:
-                self._cmake = self._configure_cmake()
-                self._cmake.build()
-                self._cmake.install()
+            self._cmake = self._configure_cmake()
+            self._cmake.build()
+            self._cmake.install()
 
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
