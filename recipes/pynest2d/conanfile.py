@@ -44,6 +44,8 @@ class pynest2dConan(ConanFile):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Clipper", "find_package(polyclipping")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "CLIPPER_INCLUDE_DIRS", "polyclipping_INCLUDE_DIRS")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "CLIPPER_LIBRARIES", "polyclipping_LIBRARIES")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "LIBNEST2D_INCLUDE_DIRS", "libnest2d_INCLUDE_DIRS")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "src/ ${SIP_INCLUDE_DIRS}", "src/ ${SIP_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}")
 
     def configure(self):
         self.options["SIP"].python_version = self.options.python_version
