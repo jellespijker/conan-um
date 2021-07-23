@@ -7,7 +7,7 @@ from conans import ConanFile, tools, CMake, VisualStudioBuildEnvironment
 
 class libnest2dConan(ConanFile):
     name = "CuraEngine"
-    version = "CURA-5990_cpp17"
+    version = "master"
     license = "AGPL-3.0"
     author = "Ultimaker B.V."
     url = "https://github.com/Ultimaker/CuraEngine"
@@ -47,7 +47,7 @@ class libnest2dConan(ConanFile):
 
     def requirements(self):
         if self.options.enable_arcus:
-            self.requires(f"Arcus/master@ultimaker/testing")
+            self.requires(f"Arcus/{self.version}@ultimaker/testing")
             self.requires("protobuf/3.17.1")
         self.requires("stb/20200203")
         if self.options.extern_clipper:
@@ -58,10 +58,12 @@ class libnest2dConan(ConanFile):
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(CuraEngine)", "project(CuraEngine)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Stb REQUIRED)", "find_package(stb REQUIRED)")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine pthread)", "target_link_libraries(_CuraEngine PUBLIC pthread)")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "include_directories(${Stb_INCLUDE_DIRS})", "include_directories(${stb_INCLUDE_DIRS})")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "src", "infill", "ImageBasedDensityProvider.cpp"), "#include <stb/stb_image.h>", "#include <stb_image.h>")
         if self.options.enable_arcus:
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(_CuraEngine Arcus)", "target_link_libraries(_CuraEngine PUBLIC Arcus::Arcus)\n\ttarget_link_libraries(_CuraEngine PUBLIC protobuf::protobuf)")
+            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "add_definitions(-DARCUS)", "")
 
         if self.options.extern_clipper:
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Polyclipping", "find_package(polyclipping")
@@ -79,7 +81,8 @@ class libnest2dConan(ConanFile):
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "${RAPIDJSON_INCLUDE_DIRS})", "${RapidJSON_INCLUDE_DIRS})")
 
     def configure(self):
-        self.options["Arcus"].python = False
+        if self.settings.os == "Windows":
+            self.options["Arcus"].python = False
 
     def _configure_cmake(self):
         if self._cmake:

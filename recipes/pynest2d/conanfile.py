@@ -73,3 +73,6 @@ class pynest2dConan(ConanFile):
     def package(self):
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("pynest2d.*", src = "site-packages", dst = "site-packages")
+
+    def package_info(self):
+        self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))

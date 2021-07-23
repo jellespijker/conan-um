@@ -45,4 +45,4 @@ class CuraConan(ConanFile):
         self.requires(f"pynest2d/{self.version}@ultimaker/testing")
         self.requires(f"Savitar/{self.version}@ultimaker/testing")
         self.requires(f"Uranium/{self.version}@ultimaker/testing")
-        self.requires(f"CuraEngine/CURA-5990_cpp17@ultimaker/testing")
+        self.requires(f"CuraEngine/master@ultimaker/testing")
