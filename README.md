@@ -25,7 +25,7 @@ WIP
        git clone https://github.com/jellespijker/conan-um.git
        cd conan-um
     ```
-2. Copy Conan profiles to `cp profiles/linux/* .conan/profiles/`
+2. Copy Conan profiles to `cp profiles/linux/* .conan/profiles/` make sure the compiler version specified in default matches your system compiler.
 3. Export the recipes in this repo to the local cache, so they can be used
     ```bash
     cd scripts
