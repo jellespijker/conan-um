@@ -100,7 +100,6 @@ class ArcusConan(ConanFile):
             self.copy("example_pb2.py", src = "examples", dst = "bin")
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include/Arcus"]
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, self.site_packages_folder))
         self.cpp_info.defines.append("ARCUS")
         if not self.settings.os == "Windows":
