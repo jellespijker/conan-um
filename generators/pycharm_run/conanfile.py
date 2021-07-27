@@ -16,7 +16,10 @@ class pycharm_run(VirtualEnvPythonGenerator):
         LD_LIBRARY_PATH = ":".join(self.env['LD_LIBRARY_PATH'])
         PATH = ":".join(self.env['PATH'])
         PYTHONPATH = ":".join(self.env['PYTHONPATH'])
-        CURAENGINEPATH = os.path.join(self.conanfile.dependencies["CuraEngine"].package_folder, "bin", "CuraEngine")
+        try:
+            CURAENGINEPATH = os.path.join(self.conanfile.dependencies["CuraEngine"].package_folder, "bin", "CuraEngine")
+        except:
+            CURAENGINEPATH = ""
         run_name = f"{self.conanfile.name}.run.xml"
         # how to handle <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cura_app.py" />
         with open(pathlib.Path(__file__).parent.resolve().joinpath("pycharm.run.xml"), "r") as f:

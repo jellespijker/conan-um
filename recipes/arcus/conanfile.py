@@ -43,14 +43,17 @@ class ArcusConan(ConanFile):
         self.build_requires("cmake/[>=3.16.2]")
 
     def requirements(self):
+        if self.settings.os == "Windows" and  self.settings.compiler == "gcc":
+            self.options.python = False
         if self.options.python:
             self.requires("SIP/[>=4.19.24]@ultimaker/testing")
         self.requires("protobuf/[>=3.15.5]")
 
     def configure(self):
-        self.options["SIP"].python_version = self.options.python_version
+        if self.options.python:
+            self.options["SIP"].python_version = self.options.python_version
         self.options["protobuf"].shared = True
-        if self.settings.compiler == 'Visual Studio':
+        if self.settings.compiler == "Visual Studio":
             del self.options.fPIC
 
     def generate(self):

@@ -38,11 +38,23 @@ class CuraConan(ConanFile):
         self.options["pynest2d"].python_version = self.options.python_version
 
     def requirements(self):
-        self.requires("virtualenv_ultimaker_gen/0.1@ultimaker/testing")
-        self.requires("pycharm_run_gen/0.1@ultimaker/testing")
-        self.requires(f"Arcus/modernize_build@ultimaker/testing")
-        self.requires(f"Charon/{self.version}@ultimaker/testing")
-        self.requires(f"pynest2d/modernize_build@ultimaker/testing")
-        self.requires(f"Savitar/{self.version}@ultimaker/testing")
-        self.requires(f"Uranium/{self.version}@ultimaker/testing")
-        self.requires(f"CuraEngine/{self.version}@ultimaker/testing")
+        if self.settings.os == "Windows":
+            if self.settings.compiler == "Visual Studio":
+                self.requires("virtualenv_ultimaker_gen/0.1@ultimaker/testing")
+                self.requires("pycharm_run_gen/0.1@ultimaker/testing")
+                self.requires(f"Arcus/modernize_build@ultimaker/testing")
+                self.requires(f"Charon/{self.version}@ultimaker/testing")
+                self.requires(f"pynest2d/modernize_build@ultimaker/testing")
+                self.requires(f"Savitar/{self.version}@ultimaker/testing")
+                self.requires(f"Uranium/{self.version}@ultimaker/testing")
+            if self.settings.compiler == "gcc":
+                self.requires(f"CuraEngine/{self.version}@ultimaker/testing")
+        else:
+            self.requires("virtualenv_ultimaker_gen/0.1@ultimaker/testing")
+            self.requires("pycharm_run_gen/0.1@ultimaker/testing")
+            self.requires(f"Arcus/modernize_build@ultimaker/testing")
+            self.requires(f"Charon/{self.version}@ultimaker/testing")
+            self.requires(f"pynest2d/modernize_build@ultimaker/testing")
+            self.requires(f"Savitar/{self.version}@ultimaker/testing")
+            self.requires(f"Uranium/{self.version}@ultimaker/testing")
+            self.requires(f"CuraEngine/{self.version}@ultimaker/testing")

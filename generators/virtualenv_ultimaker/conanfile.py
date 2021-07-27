@@ -12,7 +12,10 @@ class virtualenv_ultimaker(VirtualEnvPythonGenerator):
     @property
     def content(self):
         result = super(virtualenv_ultimaker, self).content
-        CURAENGINEPATH = os.path.join(self.conanfile.dependencies["CuraEngine"].package_folder, "bin", "CuraEngine")
+        try:
+            CURAENGINEPATH = os.path.join(self.conanfile.dependencies["CuraEngine"].package_folder, "bin", "CuraEngine")
+        except:
+            CURAENGINEPATH = ""
         with open(pathlib.Path(__file__).parent.resolve().joinpath("activate"), "r") as f:
             result["activate"] = f.read()
             result["activate"] = result["activate"].replace("BASEDIR=\"\"", f"BASEDIR=\"{self.conanfile.install_folder}\"")
