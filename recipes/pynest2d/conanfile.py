@@ -2,19 +2,19 @@
 #  Cura is released under the terms of the LGPLv3 or higher.
 import os
 
-from conans import ConanFile, tools, CMake, VisualStudioBuildEnvironment
-# from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conans import ConanFile, tools
+from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+
 
 class pynest2dConan(ConanFile):
     name = "pynest2d"
-    version = "master"
+    version = "modernize_build"
     license = "LGPL-3.0"
     author = "Ultimaker B.V."
     url = "https://github.com/Ultimaker/pynest2d"
     description = "Python bindings for libnest2d"
     topics = ("conan", "cura", "prusaslicer", "nesting", "c++", "bin packaging", "python", "sip")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake_find_package"
     options = {
         "shared": [True, False],
         "python_version": "ANY"
@@ -34,43 +34,40 @@ class pynest2dConan(ConanFile):
 
     _cmake = None
 
-    def requirements(self):
-        self.requires("SIP/4.19.25@ultimaker/testing")
-        self.requires(f"libnest2d/{self.version}@ultimaker/testing")
+    def build_requirements(self):
+        self.build_requires("cmake/[>=3.16.2]")
 
-    def source(self):
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(pynest2d)", """project(pynest2d)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.5 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Clipper", "find_package(polyclipping")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "CLIPPER_INCLUDE_DIRS", "polyclipping_INCLUDE_DIRS")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "CLIPPER_LIBRARIES", "polyclipping_LIBRARIES")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "LIBNEST2D_INCLUDE_DIRS", "libnest2d_INCLUDE_DIRS")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "src/ ${SIP_INCLUDE_DIRS}", "src/ ${SIP_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}")
+    def requirements(self):
+        self.requires("SIP/[>=4.19.24]@ultimaker/testing")
+        self.requires(f"libnest2d/master@ultimaker/testing")
 
     def configure(self):
         self.options["SIP"].python_version = self.options.python_version
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 
+    def generate(self):
+        cmake = CMakeDeps(self)
+        cmake.generate()
+
+        tc = CMakeToolchain(self)
+        tc.variables["SIP_MODULE_SITE_PATH"] = "site-packages"
+        tc.generate()
+
     def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if self.settings.compiler == "Visual Studio":
-            with tools.vcvars(self):
-                self._cmake = CMake(self, append_vcvars = True)
-        else:
-            self._cmake = CMake(self)
-        self._cmake.definitions["SIP_MODULE_SITE_PATH"] = os.path.join(self.build_folder, "site-packages")
-        self._cmake.configure(source_folder = self._source_subfolder)
+        self._cmake = CMake(self)
+        self._cmake.configure(source_folder = os.path.join(self.source_folder, self._source_subfolder))
         return self._cmake
 
     def build(self):
-        with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            self._cmake = self._configure_cmake()
-            self._cmake.build()
-            self._cmake.install()
+        cmake = self._configure_cmake()
+        cmake.build()
 
     def package(self):
+        cmake = self._configure_cmake()
+        cmake.install()
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("pynest2d.*", src = "site-packages", dst = "site-packages")
 

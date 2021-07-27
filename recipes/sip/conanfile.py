@@ -37,7 +37,6 @@ class SipConan(ConanFile):
         incdir = os.path.join(self.build_folder, "include")
         pyidir = os.path.join(self.build_folder, "site-packages")
         if self.settings.compiler == "Visual Studio":
-            env_build = VisualStudioBuildEnvironment(self)
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
                 with tools.vcvars(self):
                     self.run(f"python configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")

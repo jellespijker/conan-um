@@ -40,9 +40,9 @@ class CuraConan(ConanFile):
     def requirements(self):
         self.requires("virtualenv_ultimaker_gen/0.1@ultimaker/testing")
         self.requires("pycharm_run_gen/0.1@ultimaker/testing")
-        self.requires(f"Arcus/{self.version}@ultimaker/testing")
+        self.requires(f"Arcus/modernize_build@ultimaker/testing")
         self.requires(f"Charon/{self.version}@ultimaker/testing")
-        self.requires(f"pynest2d/{self.version}@ultimaker/testing")
+        self.requires(f"pynest2d/modernize_build@ultimaker/testing")
         self.requires(f"Savitar/{self.version}@ultimaker/testing")
         self.requires(f"Uranium/{self.version}@ultimaker/testing")
-        self.requires(f"CuraEngine/master@ultimaker/testing")
+        self.requires(f"CuraEngine/{self.version}@ultimaker/testing")

@@ -2,8 +2,8 @@
 #  Cura is released under the terms of the LGPLv3 or higher.
 import os
 
-from conans import ConanFile, tools, CMake, VisualStudioBuildEnvironment
-# from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conans import ConanFile, tools
+from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 
 class CharonConan(ConanFile):
     name = "Charon"
@@ -31,28 +31,34 @@ class CharonConan(ConanFile):
 
     _cmake = None
 
+    def build_requirements(self):
+        self.build_requires("cmake/[>=3.16.2]")
+
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "set(CHARON_INSTALL_PATH lib${LIB_SUFFIX}/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages)", "set(CHARON_INSTALL_PATH site-packages)")
+
+    def generate(self):
+        cmake = CMakeDeps(self)
+        cmake.generate()
+
+        tc = CMakeToolchain(self)
+        tc.variables["CURA_PYTHON_VERSION"] = self.options.python_version
+        tc.generate()
 
     def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if self.settings.compiler == "Visual Studio":
-            with tools.vcvars(self):
-                self._cmake = CMake(self, append_vcvars = True)
-        else:
-            self._cmake = CMake(self)
-        self._cmake.definitions["CURA_PYTHON_VERSION"] = self.options.python_version
-        self._cmake.configure(source_folder = self._source_subfolder)
+        self._cmake = CMake(self)
+        self._cmake.configure(source_folder = os.path.join(self.source_folder, self._source_subfolder))
         return self._cmake
 
     def build(self):
-        with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            self._cmake = self._configure_cmake()
-            self._cmake.build()
-            self._cmake.install()
+        cmake = self._configure_cmake()
+        cmake.build()
 
     def package(self):
+        cmake = self._configure_cmake()
+        cmake.install()
         self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
         self.copy("*", src = os.path.join("package", "site-packages"), dst = "site-packages")
 
@@ -61,6 +67,3 @@ class CharonConan(ConanFile):
 
     def package_id(self):
         self.info.header_only()
-
-    def deploy(self):
-        self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)

@@ -2,28 +2,30 @@
 #  Cura is released under the terms of the LGPLv3 or higher.
 import os
 
-from conans import ConanFile, tools, VisualStudioBuildEnvironment, CMake
+from conans import ConanFile, tools
+from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 
 class ArcusConan(ConanFile):
     name = "Arcus"
-    version = "master"
+    version = "modernize_build"
     license = "LGPL-3.0"
     author = "Ultimaker B.V."
     url = "https://github.com/Ultimaker/libArcus"
     description = "Communication library between internal components for Ultimaker software"
     topics = ("conan", "python", "binding", "sip", "cura", "protobuf", "c++")
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake_find_package"
     options = {
         "shared": [True, False],
+        "fPIC": [True, False],
         "python": [True, False],
         "examples": [True, False],
         "python_version": "ANY"
     }
     default_options = {
         "shared": True,
+        "fPIC": True,
         "python": True,
-        "examples": False,
+        "examples": True,
         "python_version": "3.8"
     }
     _source_subfolder = "arcus-src"
@@ -34,19 +36,19 @@ class ArcusConan(ConanFile):
         "url": f"{url}.git",
         "revision": version
     }
-
+    site_packages_folder = "site-packages"
     _cmake = None
+
+    def build_requirements(self):
+        self.build_requires("cmake/[>=3.16.2]")
+        if self.settings.os == "Windows":
+            self.build_requires("mingw_installer/1.0@conan/stable")
+            self.build_requires("mingw-w64/[>=8.1]")
 
     def requirements(self):
         if self.options.python:
-            self.requires("SIP/4.19.25@ultimaker/testing")
-        self.requires("protobuf/3.17.1")
-
-    def source(self):
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(arcus)", """project(arcus)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.4 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Protobuf 3.0.0 REQUIRED)", f"find_package(Protobuf 3.11.4 REQUIRED)")
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "target_link_libraries(Arcus PUBLIC ${PROTOBUF_LIBRARIES})", "target_link_libraries(Arcus PUBLIC protobuf::protobuf)")
+            self.requires("SIP/[>=4.19.24]@ultimaker/testing")
+        self.requires("protobuf/[>=3.15.5]")
 
     def configure(self):
         self.options["SIP"].python_version = self.options.python_version
@@ -54,33 +56,54 @@ class ArcusConan(ConanFile):
         if self.settings.compiler == 'Visual Studio':
             del self.options.fPIC
 
+    def generate(self):
+        cmake = CMakeDeps(self)
+        cmake.generate()
+
+        tc = CMakeToolchain(self)
+        tc.variables["BUILD_PYTHON"] = self.options.python
+        tc.variables["BUILD_STATIC"] = not self.options.shared
+        tc.variables["BUILD_EXAMPLES"] = self.options.examples
+        tc.variables["Python_VERSION"] = self.options.python_version
+        tc.variables["SIP_MODULE_SITE_PATH"] = self.site_packages_folder
+        tc.generate()
+
+    def configure(self):
+        if self.options.python:
+            self.options["SIP"].python_version = self.options.python_version
+        self.options["protobuf"].shared = True
+        if self.settings.compiler == 'Visual Studio':
+            del self.options.fPIC
+
     def _configure_cmake(self):
         if self._cmake:
             return self._cmake
-        if self.settings.compiler == "Visual Studio":
-            with tools.vcvars(self):
-                self._cmake = CMake(self, append_vcvars = True)
-        else:
-            self._cmake = CMake(self)
-        self._cmake.definitions["BUILD_PYTHON"] = self.options.python
-        self._cmake.definitions["BUILD_STATIC"] = not self.options.shared
-        self._cmake.definitions["BUILD_EXAMPLES"] = self.options.examples
-        self._cmake.definitions["SIP_MODULE_SITE_PATH"] = os.path.join(self.build_folder, "site-packages")
-        self._cmake.configure(source_folder = self._source_subfolder)
+        self._cmake = CMake(self)
+        self._cmake.configure(source_folder = os.path.join(self.source_folder, self._source_subfolder))
         return self._cmake
 
     def build(self):
-        with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-            self._cmake = self._configure_cmake()
-            self._cmake.build()
-            self._cmake.install()
+        cmake = self._configure_cmake()
+        cmake.build()
 
     def package(self):
-        self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
-        self.copy("*", src = "site-packages", dst = "site-packages")
+        cmake = self._configure_cmake()
+        cmake.install()
+        self.copy("LICENSE", dst = "licenses")
+        self.copy("*", src = "site-packages", dst = self.site_packages_folder)
         self.copy("*", src = os.path.join("package", "include"), dst = "include")
         self.copy("*", src = os.path.join("package", "lib"), dst = "lib")
         self.copy("*", src = os.path.join("package", "bin"), dst = "bin")
+        if self.options.examples:
+            self.copy("example", src = "examples", dst = "bin")
+            self.copy("example_py.sh", src = "examples", dst = "bin")
+            self.copy("example_pb2.py", src = "examples", dst = "bin")
 
     def package_info(self):
-        self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
+        self.cpp_info.includedirs = ["include/Arcus"]
+        self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, self.site_packages_folder))
+        self.cpp_info.defines.append("ARCUS")
+        if not self.settings.os == "Windows":
+            self.cpp_info.libs = ["libArcus.so"] if self.options.shared else ["libArcus.a"]
+        else:
+            self.cpp_info.libs = ["Arcus.dll"]

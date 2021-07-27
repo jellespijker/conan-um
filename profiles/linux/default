@@ -11,5 +11,3 @@ build_type=Release
 [options]
 [build_requires]
 [env]
-CC=/usr/bin/gcc
-CXX=/usr/bin/g++

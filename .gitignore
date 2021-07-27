@@ -9,3 +9,4 @@ venv/
 /recipes/savitar/tmp/
 /recipes/sip/tmp/
 /recipes/uranium/tmp/
+build/
