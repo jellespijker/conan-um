@@ -43,9 +43,6 @@ class libnest2dConan(ConanFile):
 
     def build_requirements(self):
         self.build_requires("cmake/[>=3.16.2]")
-        if self.settings.os == "Windows":
-            self.build_requires("mingw_installer/1.0@conan/stable")
-            self.build_requires("mingw-w64/[>=8.1]")
         if self.options.tests:
             self.build_requires("gtest/[>=1.10.0]")
 
