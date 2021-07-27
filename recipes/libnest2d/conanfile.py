@@ -27,8 +27,8 @@ class libnest2dConan(ConanFile):
         "threading": ["std", "tbb", "omp", "none"]
     }
     default_options = {
-        "shared": True,
-        "tests": True,
+        "shared": False,
+        "tests": False,
         "header_only": False,
         "extern_clipper": True,
         "extern_boost": True,
@@ -114,4 +114,4 @@ class libnest2dConan(ConanFile):
         if not self.settings.os == "Windows":
             self.cpp_info.libs = [f"lib{libname}.so"] if self.options.shared else [f"lib{libname}.a"]
         else:
-            self.cpp_info.libs = [f"{libname}.dll"]
+            self.cpp_info.libs = [f"lib{libname}.lib"]
