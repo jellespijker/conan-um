@@ -59,8 +59,8 @@ class SavitarConan(ConanFile):
 
     def configure(self):
         self.options["SIP"].python_version = self.options.python_version
-        if self.settings.compiler == 'Visual Studio':
-            self.options.extern_pugixml = False  # FIXME: for Windows
+        self.options.extern_pugixml = False  # FIXME: for Windows and MacOS, Linux
+        if self.settings.compiler == "Visual Studio":
             del self.options.fPIC
 
     def generate(self):
@@ -92,6 +92,7 @@ class SavitarConan(ConanFile):
         self.copy("*", src = "site-packages", dst = "site-packages")
         self.copy("*", src = os.path.join("package", "include"), dst = "include")
         self.copy("*", src = os.path.join("package", "lib"), dst = "lib")
+
 
     def package_info(self):
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
