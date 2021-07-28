@@ -52,7 +52,7 @@ class ArcusConan(ConanFile):
     def configure(self):
         if self.options.python:
             self.options["SIP"].python_version = self.options.python_version
-        self.options["protobuf"].shared = True
+        self.options["protobuf"].shared = not self.settings.os == "Macos"
         if self.settings.compiler == "Visual Studio":
             del self.options.fPIC
 
