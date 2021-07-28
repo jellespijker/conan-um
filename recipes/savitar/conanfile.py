@@ -53,6 +53,7 @@ class SavitarConan(ConanFile):
     def source(self):
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(savitar)", """project(savitar)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
         tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "find_package(Python3 3.4 REQUIRED COMPONENTS Interpreter Development)", f"""find_package(Python3 EXACT {self.options.python_version} REQUIRED COMPONENTS Interpreter Development)""")
+        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "add_sip_python_module(Savitar python/ThreeMFParser.sip Savitar)", "add_sip_python_module(Savitar python/ThreeMFParser.sip Savitar SIP::SIP)")
         if self.options.extern_pugixml:
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "add_subdirectory(pugixml)", "")
 
