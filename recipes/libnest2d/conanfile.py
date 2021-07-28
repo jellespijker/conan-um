@@ -72,7 +72,6 @@ class libnest2dConan(ConanFile):
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "backends", "clipper", "CMakeLists.txt"), "require_package(Clipper", "require_package(polyclipping")
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "backends", "clipper", "CMakeLists.txt"), "target_link_libraries(clipperBackend INTERFACE Clipper::Clipper)", "target_link_libraries(clipperBackend INTERFACE polyclipping::polyclipping)")
             tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "backends", "clipper", "clipper_polygon.hpp"), "#include <clipper.hpp>", "#include <polyclipping/clipper.hpp>")
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "optimizers", "nlopt", "CMakeLists.txt"), "require_package(NLopt 1.4 REQUIRED)", "require_package(nlopt 1.4 REQUIRED)")
 
     def generate(self):
         cmake = CMakeDeps(self)
