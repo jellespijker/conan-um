@@ -95,7 +95,9 @@ class ArcusConan(ConanFile):
     def package_info(self):
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, self.site_packages_folder))
         self.cpp_info.defines.append("ARCUS")
-        if not self.settings.os == "Windows":
+        if self.settings.os == "Linux":
             self.cpp_info.libs = ["libArcus.so"] if self.options.shared else ["libArcus.a"]
-        else:
-            self.cpp_info.libs = ["Arcus.dll"]
+        elif self.settings.os == "Windows":
+            self.cpp_info.libs = ["Arcus.dll"] if self.options.shared else ["Arcus.lib"]
+        elif self.settings.os == "Macos":
+            self.cpp_info.libs = ["libArcus.dylib"] if self.options.shared else ["libArcus.a"]

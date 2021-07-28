@@ -111,7 +111,9 @@ class libnest2dConan(ConanFile):
 
     def package_info(self):
         libname = f"nest2d_{self.options.geometries}_{self.options.optimizer}"
-        if not self.settings.os == "Windows":
+        if self.settings.os == "Linux":
             self.cpp_info.libs = [f"lib{libname}.so"] if self.options.shared else [f"lib{libname}.a"]
-        else:
-            self.cpp_info.libs = [f"lib{libname}.lib"]
+        elif self.settings.os == "Windows":
+            self.cpp_info.libs = [f"{libname}.dll"] if self.options.shared else [f"{libname}.lib"]
+        elif self.settings.os == "Macos":
+            self.cpp_info.libs = [f"lib{libname}.dylib"] if self.options.shared else [f"lib{libname}.a"]

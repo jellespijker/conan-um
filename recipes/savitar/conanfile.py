@@ -94,7 +94,9 @@ class SavitarConan(ConanFile):
 
     def package_info(self):
         self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
-        if not self.settings.os == "Windows":
-            self.cpp_info.libs = [f"libSavitar.so"] if self.options.shared else [f"libSavitar.a"]
-        else:
-            self.cpp_info.libs = [f"Savitar.dll"]
+        if self.settings.os == "Linux":
+            self.cpp_info.libs = ["libSavitar.so"] if self.options.shared else ["libSavitar.a"]
+        elif self.settings.os == "Windows":
+            self.cpp_info.libs = ["Savitar.dll"] if self.options.shared else ["Savitar.lib"]
+        elif self.settings.os == "Macos":
+            self.cpp_info.libs = ["libSavitar.dylib"] if self.options.shared else ["libSavitar.a"]
