@@ -68,13 +68,6 @@ class ArcusConan(ConanFile):
         tc.variables["SIP_MODULE_SITE_PATH"] = self.site_packages_folder
         tc.generate()
 
-    def configure(self):
-        if self.options.python:
-            self.options["SIP"].python_version = self.options.python_version
-        self.options["protobuf"].shared = True
-        if self.settings.compiler == "Visual Studio":
-            del self.options.fPIC
-
     def _configure_cmake(self):
         if self._cmake:
             return self._cmake
