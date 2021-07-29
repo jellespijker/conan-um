@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt	(revision 031e4e61218edd092fbc54fbc6df145287b628ba)
++++ b/CMakeLists.txt	(date 1627570603829)
+@@ -2,7 +2,7 @@
+
+ project(Libnest2D)
+
+-set(CMAKE_CXX_STANDARD 11)
++set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_CXX_STANDARD_REQUIRED)
+
+ # Add our own cmake module path.

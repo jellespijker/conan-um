@@ -1,0 +1,26 @@
+Index: cmake_modules/FindClipper.cmake
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cmake_modules/FindClipper.cmake b/cmake_modules/Findpolyclipping.cmake
+rename from cmake_modules/FindClipper.cmake
+rename to cmake_modules/Findpolyclipping.cmake
+--- a/cmake_modules/FindClipper.cmake	(revision 031e4e61218edd092fbc54fbc6df145287b628ba)
++++ b/cmake_modules/Findpolyclipping.cmake	(date 1627557398677)
+@@ -74,11 +74,11 @@
+     CLIPPER_LIBRARIES)
+ 
+ if(CLIPPER_FOUND)
+-    add_library(Clipper::Clipper UNKNOWN IMPORTED)
+-    set_target_properties(Clipper::Clipper PROPERTIES IMPORTED_LOCATION ${CLIPPER_LIBRARIES})
+-    set_target_properties(Clipper::Clipper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CLIPPER_INCLUDE_DIRS})
++    add_library(polyclipping::polyclipping UNKNOWN IMPORTED)
++    set_target_properties(polyclipping::polyclipping PROPERTIES IMPORTED_LOCATION ${CLIPPER_LIBRARIES})
++    set_target_properties(polyclipping::polyclipping PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CLIPPER_INCLUDE_DIRS})
+     if(CLIPPER_LIBRARIES_RELEASE AND CLIPPER_LIBRARIES_DEBUG)
+-        set_target_properties(Clipper::Clipper PROPERTIES
++        set_target_properties(polyclipping::polyclipping PROPERTIES
+             IMPORTED_LOCATION_DEBUG          ${CLIPPER_LIBRARIES_DEBUG}
+             IMPORTED_LOCATION_RELWITHDEBINFO ${CLIPPER_LIBRARIES_RELEASE}
+             IMPORTED_LOCATION_RELEASE        ${CLIPPER_LIBRARIES_RELEASE}

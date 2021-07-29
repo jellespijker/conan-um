@@ -1,0 +1,18 @@
+Index: include/libnest2d/backends/clipper/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/include/libnest2d/backends/clipper/CMakeLists.txt b/include/libnest2d/backends/clipper/CMakeLists.txt
+--- a/include/libnest2d/backends/clipper/CMakeLists.txt	(revision 031e4e61218edd092fbc54fbc6df145287b628ba)
++++ b/include/libnest2d/backends/clipper/CMakeLists.txt	(date 1627556000730)
+@@ -1,7 +1,7 @@
+ add_library(clipperBackend INTERFACE)
+
+-require_package(Clipper 6.1 REQUIRED)
+-target_link_libraries(clipperBackend INTERFACE Clipper::Clipper)
++require_package(polyclipping 6.1 REQUIRED)
++target_link_libraries(clipperBackend INTERFACE polyclipping::polyclipping)
+
+ # Clipper backend is not enough on its own, it still need some functions
+ # from Boost geometry

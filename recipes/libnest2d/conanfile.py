@@ -1,13 +1,16 @@
 #  Copyright (c) 2021 Jelle Spijker
 #  Cura is released under the terms of the LGPLv3 or higher.
 import os
+import pathlib
 
 from conans import ConanFile, tools
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conan.tools.layout import LayoutPackager
+from conan.tools.files import apply_conandata_patches
 
 class libnest2dConan(ConanFile):
     name = "libnest2d"
-    version = "master"
+    version = "4.10.0"
     license = "LGPL-3.0"
     author = "Ultimaker B.V."
     url = "https://github.com/Ultimaker/libnest2d"
@@ -18,66 +21,73 @@ class libnest2dConan(ConanFile):
         "shared": [True, False],
         "tests": [True, False],
         "header_only": [True, False],
-        "extern_clipper": [True, False],
-        "extern_boost": [True, False],
-        "extern_nlopt": [True, False],
-        "extern_gtest": [True, False],
         "geometries": ["clipper", "boost", "eigen"],
         "optimizer": ["nlopt", "optimlib"],
         "threading": ["std", "tbb", "omp", "none"]
     }
     default_options = {
         "shared": False,
-        "tests": False,
+        "tests": True,
         "header_only": False,
-        "extern_clipper": True,
-        "extern_boost": True,
-        "extern_nlopt": True,
-        "extern_gtest": True,
         "geometries": "clipper",
         "optimizer": "nlopt",
         "threading": "std"
     }
-    _source_subfolder = "libnest2d-src"
-
+    exports = "0001-cst17.patch", "0002-link_to_polyclipping.patch", "0003-find_polyclipping.patch", "0004-header_polyclipping.patch"
     scm = {
         "type": "git",
-        "subfolder": _source_subfolder,
-        "url": f"{url}.git",
-        "revision": version
+        "subfolder": ".",
+        "url": "https://github.com/Ultimaker/libnest2d.git",
+        "revision": "031e4e61218edd092fbc54fbc6df145287b628ba"
     }
-
-    _cmake = None
 
     def build_requirements(self):
         self.build_requires("cmake/[>=3.16.2]")
         if self.options.tests:
-            self.build_requires("catch2/[>=2.13.6]")
+            self.build_requires("catch2/[>=2.13.6]", force_host_context=True)
 
     def requirements(self):
-        if self.options.extern_clipper and self.options.geometries == "clipper":
+        if self.options.geometries == "clipper":
             self.requires("clipper/[>=6.4.2]")
-        if self.options.extern_boost:
             self.requires("boost/1.70.0")
-        if self.options.extern_nlopt and self.options.optimizer == "nlopt":
+        elif self.options.geometries == "eigen":
+            self.requires("eigen/[>=3.3.7]")
+        if self.options.optimizer == "nlopt":
             self.requires("nlopt/[>=2.7.0]")
+
+    def source(self):
+        self.scm = self.conan_data["sources"][self.version]
+        apply_conandata_patches(self)
+
+    def layout(self):
+        # The sources can be found in the root dir
+        self.folders.source = "."
+
+        # The build folder is created with the CLion way
+        # TODO: Take into account different compilers
+        self.folders.build = f"cmake-build-{self.settings.build_type}".lower()
+
+        # In case we use "conan package" we declare an output directory
+        self.folders.package = f"package-{self.settings.build_type}".lower()
+        self.folders.imports = self.folders.build
+
+        # INFOS
+        self.cpp.source.includedirs = ["include"]
+        self.cpp.build.libdirs = ["."]
+        self.cpp.build.libs = [f"libnest2d_{self.options.geometries}_{self.options.optimizer}"]
+        self.cpp.package.libs = [f"libnest2d_{self.options.geometries}_{self.options.optimizer}"]
 
     def configure(self):
         if self.settings.compiler == "Visual Studio":
             del self.options.fPIC
-
-    def source(self):
-        tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "CMakeLists.txt"), "project(Libnest2D)", """project(Libnest2D)\nlist(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})""")
-        if self.options.extern_clipper and self.options.geometries == "clipper":
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "backends", "clipper", "CMakeLists.txt"), "require_package(Clipper", "require_package(polyclipping")
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "backends", "clipper", "CMakeLists.txt"), "target_link_libraries(clipperBackend INTERFACE Clipper::Clipper)", "target_link_libraries(clipperBackend INTERFACE polyclipping::polyclipping)")
-            tools.replace_in_file(os.path.join(self.source_folder, self._source_subfolder, "include", "libnest2d", "backends", "clipper", "clipper_polygon.hpp"), "#include <clipper.hpp>", "#include <polyclipping/clipper.hpp>")
 
     def generate(self):
         cmake = CMakeDeps(self)
         cmake.generate()
 
         tc = CMakeToolchain(self)
+        tc.blocks["generic_system"].values["generator_platform"] = None
+        tc.blocks["generic_system"].values["toolset"] = None
         tc.variables["LIBNEST2D_HEADER_ONLY"] = self.options.header_only
         if self.options.header_only:
             tc.variables["BUILD_SHARED_LIBS"] = False
@@ -89,30 +99,10 @@ class libnest2dConan(ConanFile):
         tc.variables["LIBNEST2D_THREADING"] = self.options.threading
         tc.generate()
 
-    def _configure_cmake(self):
-        if self._cmake:
-            return self._cmake
-        self._cmake = CMake(self)
-        self._cmake.configure(source_folder = os.path.join(self.source_folder, self._source_subfolder))
-        return self._cmake
-
     def build(self):
-        cmake = self._configure_cmake()
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
 
     def package(self):
-        cmake = self._configure_cmake()
-        cmake.install()
-        self.copy("LICENSE", dst = "licenses", src = self._source_subfolder)
-        self.copy("*", src = "include", dst = "include")
-        self.copy("*", src = os.path.join("package", "bin"), dst = "bin")
-        self.copy("*", src = os.path.join("package", "lib"), dst = "lib")
-
-    def package_info(self):
-        libname = f"libnest2d_{self.options.geometries}_{self.options.optimizer}"
-        if self.settings.os == "Linux":
-            self.cpp_info.libs = [f"{libname}.so"] if self.options.shared else [f"{libname}.a"]
-        elif self.settings.os == "Windows":
-            self.cpp_info.libs = [f"{libname}.dll"] if self.options.shared else [f"{libname}.lib"]
-        elif self.settings.os == "Macos":
-            self.cpp_info.libs = [f"{libname}.dylib"] if self.options.shared else [f"{libname}.a"]
+        LayoutPackager(self).package()
