@@ -28,7 +28,9 @@ class SipConan(ConanFile):
 
     @property
     def python_interp(self):
-        return "\"{}\"".format(tools.get_env("CONAN_PYTHON_INTERP", f"python"))
+        interp = "\"{}\"".format(tools.get_env("CONAN_PYTHON_INTERP", f"python"))
+        interp += str(self.options.python_version) if self.settings.os == "Linux" else ""
+        return interp
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
