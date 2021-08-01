@@ -3,7 +3,7 @@
 
 import os
 
-from conans import ConanFile, tools, VisualStudioBuildEnvironment
+from conans import ConanFile, tools
 
 
 class SipConan(ConanFile):
@@ -21,10 +21,14 @@ class SipConan(ConanFile):
     }
     default_options = {
         "shared": True,
-        "python_version": "3.8"
+        "python_version": "3.9"
     }
     exports_sources = ["SIPMacros.cmake"]
     _source_subfolder = "sip-src"
+
+    @property
+    def python_interp(self):
+        return "\"{}\"".format(tools.get_env("CONAN_PYTHON_INTERP", f"python"))
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
@@ -39,12 +43,12 @@ class SipConan(ConanFile):
         if self.settings.compiler == "Visual Studio":
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
                 with tools.vcvars(self):
-                    self.run(f"python configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
+                    self.run(f"{self.python_interp} configure.py {static_arg} --bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir} --target-py-version {self.options.python_version}")
                     self.run(f"nmake")
                     self.run(f"nmake install")
         else:
             with tools.chdir(os.path.join(self.source_folder, self._source_subfolder)):
-                self.run(f"python{self.options.python_version} configure.py {static_arg}--bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir}")
+                self.run(f"{self.python_interp} configure.py {static_arg}--bindir={bindir} --destdir={destdir} --incdir={incdir} --pyidir={pyidir}")
                 self.run(f"make")
                 self.run(f"make install")
 
@@ -65,6 +69,7 @@ class SipConan(ConanFile):
 
     def package_info(self):
         self.env_info.path.append(os.path.join(self.package_folder, "bin"))
-        self.env_info.PYTHONPATH.append(os.path.join(self.package_folder, "site-packages"))
+        self.env_info.CONAN_PYTHON_INTERP = self.python_interp
+        self.runenv_info.append("PYTHONPATH", os.path.join(self.package_folder, "site-packages"))
         self.cpp_info.build_modules["cmake_find_package"].append("SIPMacros.cmake")
         self.cpp_info.build_modules["CMakeToolchain"].append("SIPMacros.cmake")

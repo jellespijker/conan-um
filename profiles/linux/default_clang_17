@@ -1,4 +1,0 @@
-include(default_clang)
-
-[settings]
-compiler.cppstd=17

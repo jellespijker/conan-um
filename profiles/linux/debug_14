@@ -1,8 +1,0 @@
-include(default_14)
-
-[settings]
-build_type=Debug
-
-[options]
-[build_requires]
-[env]

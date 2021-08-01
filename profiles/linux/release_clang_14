@@ -1,9 +1,0 @@
-include(default_clang_14)
-
-[settings]
-build_type=Release
-
-[options]
-[build_requires]
-[env]
- 

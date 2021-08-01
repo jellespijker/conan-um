@@ -1,8 +1,0 @@
-include(default_17)
-
-[settings]
-build_type=Release
-
-[options]
-[build_requires]
-[env]

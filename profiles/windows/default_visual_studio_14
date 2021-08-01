@@ -1,4 +1,0 @@
-include(default_visual_studio)
-
-[settings]
-compiler.cppstd=14
