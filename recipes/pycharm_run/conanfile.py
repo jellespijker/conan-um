@@ -1,44 +1,76 @@
-from conans.client.generators.virtualenv_python import VirtualEnvPythonGenerator
 from conans import ConanFile
-import pathlib
-import os
+from conan.tools.env import Environment
+from conans.model import Generator
 
-class pycharm_run(VirtualEnvPythonGenerator):
-    venv_name = "ultimaker"
-    
-    def __init__(self, conanfile):
+import pathlib
+from jinja2 import Template
+
+
+def runenv_from_cpp_info(conanfile: ConanFile, cpp_info):
+    """ return an Environment deducing the runtime information from a cpp_info
+    """
+    dyn_runenv = Environment(conanfile)
+    if cpp_info is None:  # This happens when the dependency is a private one = BINARY_SKIP
+        return dyn_runenv
+    if cpp_info.bin_paths:  # cpp_info.exes is not defined yet
+        dyn_runenv.prepend_path("PATH", cpp_info.bin_paths)
+    # If it is a build_require this will be the build-os, otherwise it will be the host-os
+    if cpp_info.lib_paths:
+        dyn_runenv.prepend_path("LD_LIBRARY_PATH", cpp_info.lib_paths)
+        dyn_runenv.prepend_path("DYLD_LIBRARY_PATH", cpp_info.lib_paths)
+    if cpp_info.framework_paths:
+        dyn_runenv.prepend_path("DYLD_FRAMEWORK_PATH", cpp_info.framework_paths)
+    return dyn_runenv
+
+
+class pycharm_run(Generator):
+    """ captures the conanfile environment that is defined from its
+    dependencies, and also from profiles
+    """
+
+    def __init__(self, conanfile: ConanFile):
         super(pycharm_run, self).__init__(conanfile)
 
     @property
+    def filename(self):
+        return "cura_app.run.xml"
+
+    def environment(self):
+        """ collects the runtime information from dependencies. For normal libraries should be
+        very occasional
+        """
+        runenv = Environment(self.conanfile)
+        host_req = self.conanfile.dependencies.host
+        test_req = self.conanfile.dependencies.test
+        for _, dep in list(host_req.items()) + list(test_req.items()):
+            if dep.runenv_info:
+                runenv.compose(dep.runenv_info)
+            runenv.compose(runenv_from_cpp_info(self.conanfile, dep.cpp_info))
+
+        return runenv
+
+    @property
     def content(self):
-        result = super(pycharm_run, self).content
-        DYLD_LIBRARY_PATH = ":".join(self.env['DYLD_LIBRARY_PATH'])
-        LD_LIBRARY_PATH = ":".join(self.env['LD_LIBRARY_PATH'])
-        PATH = ":".join(self.env['PATH'])
-        PYTHONPATH = ":".join(self.env['PYTHONPATH'])
-        try:
-            CURAENGINEPATH = os.path.join(self.conanfile.dependencies["CuraEngine"].package_folder, "bin", "CuraEngine")
-        except:
-            CURAENGINEPATH = ""
-        run_name = f"{self.conanfile.name}.run.xml"
-        # how to handle <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cura_app.py" />
-        with open(pathlib.Path(__file__).parent.resolve().joinpath("pycharm.run.xml"), "r") as f:
-            result[run_name] = f.read()
-            result[run_name] = result[run_name].replace("name=\"\"", f"name=\"{self.conanfile.name}\"")
-            result[run_name] = result[run_name].replace("<env name=\"DYLD_LIBRARY_PATH\" value=\"\" />", f"<env name=\"DYLD_LIBRARY_PATH\" value=\"{DYLD_LIBRARY_PATH}\" />")
-            result[run_name] = result[run_name].replace("<env name=\"LD_LIBRARY_PATH\" value=\"\" />", f"<env name=\"LD_LIBRARY_PATH\" value=\"{LD_LIBRARY_PATH}\" />")
-            result[run_name] = result[run_name].replace("<env name=\"PATH\" value=\"\" />", f"<env name=\"PATH\" value=\"{PATH}\" />")
-            result[run_name] = result[run_name].replace("<env name=\"PYTHONPATH\" value=\"\" />", f"<env name=\"PYTHONPATH\" value=\"{PYTHONPATH}\" />")
-            result[run_name] = result[run_name].replace("<env name=\"CURAENGINEPATH\" value=\"\" />", f"<env name=\"CURAENGINEPATH\" value=\"{CURAENGINEPATH}\" />")
-        return result
+        run_env = self.environment()
+        kwargs = {}
+        if run_env:
+            for env, val in run_env.items():
+                kwargs[env] = val
+
+            with open(pathlib.Path(__file__).parent.resolve().joinpath("pycharm.run.jinja"), "r") as f:
+                tm = Template(f.read())
+                result = tm.render(**kwargs)
+                self.conanfile.output.success(result)
+                return result
+        return ""
 
 
-class VirtualEnvUMGeneratorPackage(ConanFile):
+class PycharmRunEnvGeneratorPackage(ConanFile):
     name = "pycharm_run_gen"
     version = "0.1"
     url = "https://github.com/jellespijker/conan-um"
     license = "LGPL-3.0"
-    exports = ["pycharm.run.xml"]
+    exports = ["pycharm.run.jinja"]
 
     def package(self):
-        self.copy("pycharm.run.xml", ".", ".")
+        self.copy("pycharm.run.jinja", ".", ".")
