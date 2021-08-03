@@ -37,7 +37,7 @@ Visual Studio 2019 community edition (with support for C++17)
 # Conan
 Install Conan remote and Conan profiles from my repo
 ```bash
-conan config install https://jellespijker/conan-config.git
+conan config install https://github.com/jellespijker/conan-config.git
 ```
 
 # Setup the development environment
