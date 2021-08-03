@@ -66,5 +66,5 @@ Finally, use Conan to install the Ultimaker dependencies and create a Pycharm ru
 install the Cura dependencies. Make sure you specify the `-o *:python_version=3.8` you want to compile for.
 ```bash
 mkdir .run
-conan install Cura/4.10.0@ultimaker/testing -pr:b cura_release.jinja --pr:h cura_release.jinja -build=missing -o *:python_version=3.8 -g pycharm_run -if .run
+conan install Cura/4.10.0@ultimaker/testing -pr:b cura_release.jinja -pr:h cura_release.jinja --build=missing -o *:python_version=3.8 -g pycharm_run -if .run
 ```
