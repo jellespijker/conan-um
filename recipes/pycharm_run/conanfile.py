@@ -1,44 +1,27 @@
-from conans import ConanFile
-from conan.tools.env import Environment
-from conans.model import Generator
+import os
 
-import pathlib
+from conans import ConanFile
+from copy import deepcopy
+from conans.model import Generator
+from conan.tools.env import Environment
+from conan.tools.env.virtualrunenv import runenv_from_cpp_info
 from jinja2 import Template
 
 
-def runenv_from_cpp_info(conanfile: ConanFile, cpp_info):
-    """ return an Environment deducing the runtime information from a cpp_info
-    """
-    dyn_runenv = Environment(conanfile)
-    if cpp_info is None:  # This happens when the dependency is a private one = BINARY_SKIP
-        return dyn_runenv
-    if cpp_info.bin_paths:  # cpp_info.exes is not defined yet
-        dyn_runenv.prepend_path("PATH", cpp_info.bin_paths)
-    # If it is a build_require this will be the build-os, otherwise it will be the host-os
-    if cpp_info.lib_paths:
-        dyn_runenv.prepend_path("LD_LIBRARY_PATH", cpp_info.lib_paths)
-        dyn_runenv.prepend_path("DYLD_LIBRARY_PATH", cpp_info.lib_paths)
-    if cpp_info.framework_paths:
-        dyn_runenv.prepend_path("DYLD_FRAMEWORK_PATH", cpp_info.framework_paths)
-    return dyn_runenv
-
-
-class pycharm_run(Generator):
+class PyCharmRunEnv(Generator):
     """ captures the conanfile environment that is defined from its
     dependencies, and also from profiles
     """
 
-    def __init__(self, conanfile: ConanFile):
-        super(pycharm_run, self).__init__(conanfile)
-
     @property
     def filename(self):
-        return "cura_app.run.xml"
+        pass
 
     def environment(self):
         """ collects the runtime information from dependencies. For normal libraries should be
         very occasional
         """
+        self.conanfile.output.info("PyCharmRunEnv environment")
         runenv = Environment(self.conanfile)
         host_req = self.conanfile.dependencies.host
         test_req = self.conanfile.dependencies.test
@@ -51,26 +34,29 @@ class pycharm_run(Generator):
 
     @property
     def content(self):
+        self.conanfile.output.info("PyCharmRunEnv generate")
         run_env = self.environment()
-        kwargs = {}
+        files = {}
         if run_env:
-            for env, val in run_env.items():
-                kwargs[env] = val
+            self.conanfile.output.info("PyCharmRunEnv run_env")
+            if not hasattr(self.conanfile, "pycharm_targets"):
+                self.conanfile.output.error("pycharm_targets not set in conanfile.py")
+                return
+            for ref_target in getattr(self.conanfile, "pycharm_targets"):
+                target = deepcopy(ref_target)
+                jinja_path = target.pop("jinja_path")
+                self.conanfile.output.info(f"jinja_path: {jinja_path}")
+                with open(jinja_path, "r") as f:
+                    tm = Template(f.read())
+                    result = tm.render(env_vars = run_env, **target)
+                    self.conanfile.output.success(f"result {result}")
+                    file_name = f"{target['name']}.run.xml"
+                    files[file_name] = result
+        return files
 
-            with open(pathlib.Path(__file__).parent.resolve().joinpath("pycharm.run.jinja"), "r") as f:
-                tm = Template(f.read())
-                result = tm.render(**kwargs)
-                self.conanfile.output.success(result)
-                return result
-        return ""
 
-
-class PycharmRunEnvGeneratorPackage(ConanFile):
-    name = "pycharm_run_gen"
+class PyCharmRunEnvPackage(ConanFile):
+    name = "PyCharmRunEnvGen"
     version = "0.1"
     url = "https://github.com/jellespijker/conan-um"
-    license = "LGPL-3.0"
-    exports = ["pycharm.run.jinja"]
-
-    def package(self):
-        self.copy("pycharm.run.jinja", ".", ".")
+    license = "MIT"

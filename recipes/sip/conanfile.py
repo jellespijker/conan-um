@@ -21,7 +21,7 @@ class SipConan(ConanFile):
     }
     default_options = {
         "shared": True,
-        "python_version": "3.9"
+        "python_version": "3.8"
     }
     exports_sources = ["SIPMacros.cmake"]
     _source_subfolder = "sip-src"
@@ -66,7 +66,7 @@ class SipConan(ConanFile):
         sip_executable = str(os.path.join(self.package_folder, "bin", "sip"))
         if self.settings.os == "Windows":
             sip_executable += ".exe"
-            sip_executable =sip_executable.replace("\\", "\\\\")
+            sip_executable = sip_executable.replace("\\", "\\\\")
         tools.replace_in_file(os.path.join(self.package_folder, "SIPMacros.cmake"), "SET(SIP_EXECUTABLE \"\")", f"SET(SIP_EXECUTABLE \"{sip_executable}\")")
 
     def package_info(self):
