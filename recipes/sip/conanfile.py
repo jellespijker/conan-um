@@ -5,7 +5,7 @@ import os
 from conans import ConanFile, tools
 from conan.tools.gnu import AutotoolsDeps, AutotoolsToolchain, Autotools
 from conan.tools.microsoft import unix_path
-from conan.tools.env.virtualbuildenv import VirtualBuildEnv
+from conan.tools.env.virtualrunenv import VirtualRunEnv
 
 class AutoSIPtools(Autotools):
     def configure(self, buildTool = ""):
@@ -44,8 +44,8 @@ class SipConan(ConanFile):
         self.requires("Python/3.8.10@python/testing")
 
     def generate(self):
-        ms = VirtualBuildEnv(self)
-        ms.generate()
+        ms = VirtualRunEnv(self)
+        ms.generate(auto_activate = True)
 
         deps = AutotoolsDeps(self)
         deps.generate()
@@ -59,6 +59,7 @@ class SipConan(ConanFile):
         tc.configure_args.append(f"--incdir={os.path.join(self.install_folder, 'package', 'include')}")
         tc.configure_args.append(f"--destdir={os.path.join(self.install_folder, 'package', 'site-packages')}")
         tc.configure_args.append(f"--pyidir={os.path.join(self.install_folder, 'package', 'site-packages')}")
+        tc.configure_args.append(f"--target-py-version={self.deps_cpp_info['Python'].version}")
         tc.generate()
 
     def build(self):

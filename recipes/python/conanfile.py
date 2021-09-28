@@ -92,12 +92,11 @@ class PythonConan(ConanFile):
             tc.configure_args.append(f"--prefix={os.path.join(self.install_folder, 'package')}")
             tc.configure_args.append("--enable-ipv6")
             tc.configure_args.append("--without-pymalloc")
-            tc.configure_args.append("--with-system-ffi")
             tc.configure_args.append("--with-doc-strings")
             tc.configure_args.append("--with-ensurepip")
+            tc.configure_args.append(f"--with-openssl={self.deps_cpp_info['openssl'].rootpath}")
             if self.settings.build_type == "Debug":
                 tc.configure_args.append("--with-pydebug")
-                tc.cflags.append("-DPy_DEBUG")
             else:
                 tc.configure_args.append("--with-lto")
                 tc.configure_args.append("--enable-optimizations")
