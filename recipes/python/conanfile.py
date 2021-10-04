@@ -5,6 +5,7 @@ import os
 from conans import ConanFile, tools
 from conan.tools.gnu import AutotoolsDeps, Autotools, AutotoolsToolchain
 from conan.tools.microsoft import MSBuildDeps, MSBuildToolchain, MSBuild
+from conan.tools.env.environment import Environment
 
 
 class PythonConan(ConanFile):
@@ -20,7 +21,7 @@ class PythonConan(ConanFile):
         "shared": [True, False],
     }
     default_options = {
-        "shared": True,
+        "shared": False,
     }
 
     scm = {
@@ -55,25 +56,25 @@ class PythonConan(ConanFile):
         return interp
 
     def requirements(self):
-        self.requires("openblas/0.3.15")
-        self.requires("geos/3.9.1")
-        self.requires("openssl/1.1.1k")
+        self.requires("openssl/1.1.1l")
         self.requires("sqlite3/3.36.0")
         self.requires("libffi/3.4.2")
         self.requires("xz_utils/5.2.5")
         self.requires("zlib/1.2.11")
-        if self.settings.os == "Linux":
+        if self.settings.os != "Windows":
+            self.requires("openblas/0.3.15")
+            self.requires("geos/3.9.1")
             self.requires("bzip2/1.0.8")
 
     def configure(self):
-        self.options["openblas"].shared = self.options.shared
-        self.options["geos"].shared = self.options.shared
         self.options["openssl"].shared = self.options.shared
         self.options["sqlite3"].shared = self.options.shared
         self.options["libffi"].shared = self.options.shared
         self.options["xz_utils"].shared = self.options.shared
         self.options["zlib"].shared = self.options.shared
-        if self.settings.os == "Linux":
+        if self.settings.os != "Windows":
+            self.options["openblas"].shared = self.options.shared
+            self.options["geos"].shared = self.options.shared
             self.options["bzip2"].shared = self.options.shared
 
     def generate(self):
@@ -85,24 +86,26 @@ class PythonConan(ConanFile):
             tc = MSBuildToolchain(self)
             tc.generate()
         else:
-            deps = AutotoolsDeps(self)
-            deps.generate()
-
             tc = AutotoolsToolchain(self)
-            tc.configure_args.append(f"--prefix={os.path.join(self.install_folder, 'package')}")
+            tc.ldflags.append(f"-Wl,-rpath={os.path.join(self.package_folder, 'lib')}")
+            tc.configure_args.append(f"--prefix={self.package_folder}")
             tc.configure_args.append("--enable-ipv6")
-            tc.configure_args.append("--without-pymalloc")
             tc.configure_args.append("--with-doc-strings")
+            tc.configure_args.append("--disable-test-modules")
             tc.configure_args.append("--with-ensurepip")
             tc.configure_args.append(f"--with-openssl={self.deps_cpp_info['openssl'].rootpath}")
+            tc.configure_args.append("--with-openssl-rpath=auto")
             if self.settings.build_type == "Debug":
                 tc.configure_args.append("--with-pydebug")
             else:
-                tc.configure_args.append("--with-lto")
+                tc.configure_args.append("--with-lto=full")
                 tc.configure_args.append("--enable-optimizations")
             if self.options.shared:
                 tc.configure_args.append("--enable-shared")
             tc.generate()
+
+            deps = AutotoolsDeps(self)
+            deps.generate()
 
     def build(self):
         if self.settings.os == "Windows":
@@ -112,9 +115,6 @@ class PythonConan(ConanFile):
         else:
             at = Autotools(self)
             at.configure()
-            at.make(target = "clean")
-            at.make()
-            at.make(target = "clean")
             at.make(target = "altinstall")
 
     def package(self):
