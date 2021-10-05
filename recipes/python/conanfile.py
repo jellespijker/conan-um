@@ -127,5 +127,4 @@ class PythonConan(ConanFile):
         self.cpp_info.includedirs = [f"include/python{v.major}.{v.minor}{build_type}"]
         self.user_info.interp = str(os.path.join(self.package_folder, "bin", self._interp_name))
         self.user_info.pip = str(os.path.join(self.package_folder, "bin", self._pip_name))
-        self.runenv_info.prepend_path("PYTHONPATH", os.path.join(self.package_folder, f"python{v.major}.{v.minor}", "site-packages"))
-        self.runenv_info.prepend_path("PYTHONPATH", os.path.join(self.package_folder, f"python{v.major}.{v.minor}"))
+        self.runenv_info.prepend_path("PYTHONPATH", os.path.join(self.package_folder, "lib", f"python{v.major}.{v.minor}"))
