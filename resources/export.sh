@@ -6,3 +6,4 @@ conan export ../recipes/pythonbuildtool python/testing
 conan export ../recipes/virtualenvironmentbuildtool python/testing
 conan export ../recipes/python python/testing
 conan export ../recipes/sip riverbankcomputing/testing
+conan export ../recipes/lean-vtk mmorse1217/testing
