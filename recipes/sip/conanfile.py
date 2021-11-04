@@ -4,18 +4,23 @@ import os
 
 from conans import ConanFile, tools
 from conan.tools.gnu import AutotoolsDeps, AutotoolsToolchain, Autotools
-from conan.tools.microsoft import unix_path
 from conan.tools.env.virtualrunenv import VirtualRunEnv
+from conan.tools.microsoft.subsystems import subsystem_path, deduce_subsystem
 
 class AutoSIPtools(Autotools):
-    def configure(self, buildTool = ""):
+    def configure(self, buildTool = "", build_script_folder = None):
         if not self._conanfile.should_configure:
             return
 
-        configure_cmd = f"{buildTool} {self._conanfile.source_folder}/configure.py"
-        configure_cmd = unix_path(self._conanfile, configure_cmd)
+        source = self._conanfile.source_folder
+        if build_script_folder:
+            source = os.path.join(self._conanfile.source_folder, build_script_folder)
+
+        configure_cmd = f"{buildTool} {source}/configure.py"
+        subsystem = deduce_subsystem(self._conanfile, scope="build")
+        configure_cmd = subsystem_path(subsystem, configure_cmd)
         cmd = "{} {}".format(configure_cmd, self._configure_args)
-        self._conanfile.output.info("Calling:\n > %s" % cmd)
+        self._conanfile.output.info(f"Calling:\n > {cmd}")
         self._conanfile.run(cmd)
 
 
@@ -45,7 +50,7 @@ class SipConan(ConanFile):
 
     def generate(self):
         ms = VirtualRunEnv(self)
-        ms.generate(auto_activate = True)
+        ms.generate()
 
         deps = AutotoolsDeps(self)
         deps.generate()
