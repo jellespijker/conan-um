@@ -3,20 +3,26 @@
 import os
 
 from conans import ConanFile, tools
-from conan.tools.gnu import AutotoolsDeps, Autotools, AutotoolsToolchain
+from conan.tools.gnu import AutotoolsDeps, Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.microsoft import MSBuildDeps, MSBuildToolchain, MSBuild
-from conan.tools.env.environment import Environment
+from conan.tools.files.packager import AutoPackager
+
+
+required_conan_version = ">=1.42"
 
 
 class PythonConan(ConanFile):
     name = "Python"
     version = "3.8.10"
-    description = "Python"
+    description = "The Python programming language"
     topics = ("conan", "python", "interpreter")
     license = "PSF 2.0"
     homepage = "https://www.python.org/"
     url = "https://github.com/python/cpython"
     settings = "os", "compiler", "build_type", "arch"
+    build_policy = "missing"
+    default_user = "python"
+    default_channel = "stable"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -25,37 +31,12 @@ class PythonConan(ConanFile):
         "shared": False,
         "fPIC": True
     }
-
     scm = {
         "type": "git",
         "subfolder": ".",
         "url": f"{url}.git",
         "revision": f"v{version}"
     }
-
-    @property
-    def _pip_name(self) -> str:
-        pip = "pip"
-        if self.settings.os == "Windows":
-            pip += ".exe"
-        else:
-            v = tools.Version(self.version)
-            pip += f"{v.major}.{v.minor}"
-        return pip
-
-    @property
-    def _interp_name(self) -> str:
-        interp = "python"
-        if self.settings.os == "Windows":
-            if self.settings.build_type == "Debug":
-                interp += "_d"
-            interp += ".exe"
-        else:
-            v = tools.Version(self.version)
-            interp += f"{v.major}.{v.minor}"
-            if self.settings.build_type == "Debug":
-                interp += "d"
-        return interp
 
     def requirements(self):
         self.requires("openssl/1.1.1l")
@@ -66,7 +47,6 @@ class PythonConan(ConanFile):
         if self.settings.os != "Windows":
             self.requires("openblas/0.3.15")
             self.requires("geos/3.9.1")
-            self.requires("bzip2/1.0.8")
 
     def configure(self):
         self.options["openssl"].shared = self.options.shared
@@ -79,6 +59,10 @@ class PythonConan(ConanFile):
             self.options["geos"].shared = self.options.shared
             self.options["bzip2"].shared = self.options.shared
 
+    def layout(self):
+        # FIXME: Why is the package folder empty at generation?
+        self.package_folder = self.folders.package
+
     def generate(self):
         if self.settings.os == "Windows":
             # TODO: Windows is currently boilerplate
@@ -89,14 +73,15 @@ class PythonConan(ConanFile):
             tc.generate()
         else:
             tc = AutotoolsToolchain(self)
-            tc.ldflags.append(f"-Wl,-rpath={os.path.join(self.package_folder, 'lib')}")
-            tc.configure_args.append(f"--prefix={self.package_folder}")
+            tc.default_configure_install_args = True
+            tc.ldflags.append(f"-Wl")
             tc.configure_args.append("--enable-ipv6")
             tc.configure_args.append("--with-doc-strings")
-            tc.configure_args.append("--disable-test-modules")
             tc.configure_args.append("--with-ensurepip")
             tc.configure_args.append(f"--with-openssl={self.deps_cpp_info['openssl'].rootpath}")
-            tc.configure_args.append("--with-openssl-rpath=auto")
+            if self.settings.os != "Macos":
+                tc.configure_args.append("--with-openssl-rpath=auto")
+                tc.configure_args.append("--disable-test-modules")
             if self.settings.build_type == "Debug":
                 tc.configure_args.append("--with-pydebug")
             else:
@@ -109,6 +94,9 @@ class PythonConan(ConanFile):
             deps = AutotoolsDeps(self)
             deps.generate()
 
+            pc = PkgConfigDeps(self)
+            pc.generate()
+
     def build(self):
         if self.settings.os == "Windows":
             # TODO: Windows is currently boilerplate
@@ -117,16 +105,21 @@ class PythonConan(ConanFile):
         else:
             at = Autotools(self)
             at.configure()
-            at.make(target = "altinstall")
+            at.make()
+            at.install()
 
     def package(self):
-        self.copy("*", src = os.path.join(self.build_folder, "package"), dst = ".")
+        packager = AutoPackager(self)
+        packager.run()
 
     def package_info(self):
         v = tools.Version(self.version)
-        self.cpp_info.libs = tools.collect_libs(self)
+        self.runenv_info.prepend_path("PYTHONPATH", os.path.join(self.package_folder, "lib", f"python{v.major}.{v.minor}"))
+        self.runenv_info.prepend_path("PATH", os.path.join(self.package_folder, "bin"))
+        self.buildenv_info.prepend_path("PYTHONPATH", os.path.join(self.package_folder, "lib", f"python{v.major}.{v.minor}"))
+        self.buildenv_info.prepend_path("PATH", os.path.join(self.package_folder, "bin"))
         build_type = "d" if self.settings.build_type == "Debug" else ""
         self.cpp_info.includedirs = [f"include/python{v.major}.{v.minor}{build_type}"]
-        self.user_info.interp = str(os.path.join(self.package_folder, "bin", self._interp_name))
-        self.user_info.pip = str(os.path.join(self.package_folder, "bin", self._pip_name))
-        self.runenv_info.prepend_path("PYTHONPATH", os.path.join(self.package_folder, "lib", f"python{v.major}.{v.minor}"))
+
+        # FIXME: Bug in Conan (https://github.com/conan-io/conan/issues/10009) once fixed this should be removed
+        self.cpp_info.version = self.version
