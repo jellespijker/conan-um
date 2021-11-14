@@ -2,12 +2,19 @@
 
 import os
 
+from jinja2 import Template
+
 from conans import ConanFile, tools
 from conan.tools.gnu import AutotoolsDeps, AutotoolsToolchain, Autotools
-from conan.tools.env.virtualrunenv import VirtualRunEnv
+from conan.tools.env.virtualbuildenv import VirtualBuildEnv
 from conan.tools.microsoft.subsystems import subsystem_path, deduce_subsystem
+from conan.tools.files.packager import AutoPackager
+
+
+required_conan_version = ">=1.42"
 
 class AutoSIPtools(Autotools):
+    # TODO: Check if there isn't an native solution for this, if not make FR at Conan
     def configure(self, buildTool = "", build_script_folder = None):
         if not self._conanfile.should_configure:
             return
@@ -25,7 +32,7 @@ class AutoSIPtools(Autotools):
 
 
 class SipConan(ConanFile):
-    name = "SIP"
+    name = "sip"
     version = "4.19.25"
     description = "SIP Python binding for C/C++ (Used by PyQt)"
     topics = ("conan", "python", "binding", "sip")
@@ -33,24 +40,29 @@ class SipConan(ConanFile):
     homepage = "https://www.riverbankcomputing.com/software/sip/"
     url = f"https://www.riverbankcomputing.com/static/Downloads/sip"
     settings = "os", "compiler", "build_type", "arch"
-    exports = "LICENSE*", "SIPMacros.cmake"
+    exports = ["LICENSE*", "cmake/SIPMacros.cmake.jinja"]
+    exports_sources = ["cmake/SIPMacros.cmake.jinja"]
+    build_policy = "missing"
+    default_user = "riverbankcomputing"
+    default_channel = "stable"
+    build_requires = "Python/3.8.10@python/stable"
+    requires = "Python/3.8.10@python/stable"
     options = {
         "shared": [True, False],
     }
     default_options = {
         "shared": True,
     }
-    exports_sources = ["SIPMacros.cmake"]
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version], strip_root = True)
 
-    def requirements(self):
-        self.requires("Python/3.8.10@python/testing")
+    def layout(self):
+        self.package_folder = self.folders.package
 
     def generate(self):
-        ms = VirtualRunEnv(self)
-        ms.generate()
+        bv = VirtualBuildEnv(self)  # Ensures that we use the Python executable from our own package
+        bv.generate()
 
         deps = AutotoolsDeps(self)
         deps.generate()
@@ -60,30 +72,36 @@ class SipConan(ConanFile):
             tc.configure_args.append("--static")
         if self.settings.build_type == "Debug":
             tc.configure_args.append("--debug")
-        tc.configure_args.append(f"--bindir={os.path.join(self.install_folder, 'package', 'bin')}")
-        tc.configure_args.append(f"--incdir={os.path.join(self.install_folder, 'package', 'include')}")
-        tc.configure_args.append(f"--destdir={os.path.join(self.install_folder, 'package', 'site-packages')}")
-        tc.configure_args.append(f"--pyidir={os.path.join(self.install_folder, 'package', 'site-packages')}")
-        tc.configure_args.append(f"--target-py-version={self.deps_cpp_info['Python'].version}")
+        tc.configure_args.append(f"--bindir={os.path.join(self.package_folder, 'bin')}")
+        tc.configure_args.append(f"--incdir={os.path.join(self.package_folder, 'include')}")
+        tc.configure_args.append(f"--destdir={os.path.join(self.package_folder, 'site-packages')}")
+        tc.configure_args.append(f"--pyidir={os.path.join(self.package_folder, 'site-packages')}")
+        v = tools.Version(self.deps_cpp_info['Python'].version)
+        tc.configure_args.append(f"--target-py-version={v.major}.{v.minor}")
         tc.generate()
 
     def build(self):
         at = AutoSIPtools(self)
-        at.configure(self.deps_user_info["Python"].interp)
+        at.configure("python3")
         at.make()
-        at.make(target = "clean")
         at.install()
 
     def package(self):
-        self.copy("*", src = os.path.join(self.build_folder, "package"), dst = ".")
-        self.copy("SIPMacros.cmake", ".", ".")
-        sip_executable = str(os.path.join(self.package_folder, "bin", "sip"))
-        if self.settings.os == "Windows":
-            sip_executable += ".exe"
-            sip_executable = sip_executable.replace("\\", "\\\\")
-        tools.replace_in_file(os.path.join(self.package_folder, "SIPMacros.cmake"), "SET(SIP_EXECUTABLE \"\")", f"SET(SIP_EXECUTABLE \"{sip_executable}\")")
+        with open(os.path.join(self.source_folder, "cmake", "SIPMacros.cmake.jinja"), "r") as f:
+            tm = Template(f.read())
+            sip_executable = str(os.path.join(self.package_folder, "bin", "sip"))
+            if self.settings.os == "Windows":
+                sip_executable += ".exe"
+            result = tm.render(sip_path = sip_executable)
+            tools.save(os.path.join(self.package_folder, "share", "cmake", "SIPMacros.cmake"), result)
+        packager = AutoPackager(self)
+        packager.run()
 
     def package_info(self):
         self.runenv_info.append("PYTHONPATH", os.path.join(self.package_folder, "site-packages"))
-        self.cpp_info.build_modules["cmake_find_package"].append("SIPMacros.cmake")
-        self.cpp_info.build_modules["CMakeToolchain"].append("SIPMacros.cmake")
+        self.buildenv_info.append("PYTHONPATH", os.path.join(self.package_folder, "site-packages"))
+        self.runenv_info.append("PATH", os.path.join(self.package_folder, "bin"))
+        self.buildenv_info.append("PATH", os.path.join(self.package_folder, "bin"))
+        sipmacros_path = os.path.join(self.package_folder, "share", "cmake", "SIPMacros.cmake")
+        for build_module in ("cmake_find_package", "cmake_find_package_multi", "CMakeToolchain"):
+            self.cpp_info.build_modules[build_module].append(sipmacros_path)
