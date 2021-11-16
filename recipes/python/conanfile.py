@@ -74,14 +74,14 @@ class PythonConan(ConanFile):
         else:
             tc = AutotoolsToolchain(self)
             tc.default_configure_install_args = True
-            tc.ldflags.append(f"-Wl")
+            if self.settings.os == "Linux":
+                tc.ldflags.append(f"-Wl,-rpath={os.path.join(self.package_folder, 'lib')}")
+            else:
+                tc.ldflags.append("-Wl")
             tc.configure_args.append("--enable-ipv6")
             tc.configure_args.append("--with-doc-strings")
             tc.configure_args.append("--with-ensurepip")
             tc.configure_args.append(f"--with-openssl={self.deps_cpp_info['openssl'].rootpath}")
-            if self.settings.os != "Macos":
-                tc.configure_args.append("--with-openssl-rpath=auto")
-                tc.configure_args.append("--disable-test-modules")
             if self.settings.build_type == "Debug":
                 tc.configure_args.append("--with-pydebug")
             else:
@@ -93,9 +93,6 @@ class PythonConan(ConanFile):
 
             deps = AutotoolsDeps(self)
             deps.generate()
-
-            pc = PkgConfigDeps(self)
-            pc.generate()
 
     def build(self):
         if self.settings.os == "Windows":
