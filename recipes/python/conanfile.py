@@ -103,6 +103,7 @@ class PythonConan(ConanFile):
             at = Autotools(self)
             at.configure()
             at.make()
+            at.make(target = "clean")
             at.install()
 
     def package(self):
