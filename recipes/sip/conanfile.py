@@ -76,7 +76,7 @@ class SipConan(ConanFile):
         tc.configure_args.append(f"--incdir={os.path.join(self.package_folder, 'include')}")
         tc.configure_args.append(f"--destdir={os.path.join(self.package_folder, 'site-packages')}")
         tc.configure_args.append(f"--pyidir={os.path.join(self.package_folder, 'site-packages')}")
-        v = tools.Version(self.deps_cpp_info['Python'].version)
+        v = tools.Version(self.dependencies['Python'].ref.version)
         tc.configure_args.append(f"--target-py-version={v.major}.{v.minor}")
         tc.generate()
 
