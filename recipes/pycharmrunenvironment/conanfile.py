@@ -6,7 +6,8 @@ from jinja2 import Template
 
 from conans import ConanFile
 from conans.tools import save
-from conan.tools.env.virtualrunenv import runenv_from_cpp_info, VirtualRunEnv
+from conan.tools.env import Environment
+from conan.tools.env.virtualrunenv import VirtualRunEnv
 
 class PyCharmRunEnvironment(VirtualRunEnv):
     """
@@ -25,8 +26,8 @@ class PyCharmRunEnvironment(VirtualRunEnv):
         ]
     """
 
-    def generate(self, auto_activate = False):
-        run_env = self.environment()
+    def generate(self, run_env = Environment(), scope = "run"):
+        run_env.compose_env(self.environment())
         if run_env:
             if not hasattr(self._conanfile, "pycharm_targets"):
                 self._conanfile.output.error("pycharm_targets not set in conanfile.py")
@@ -36,7 +37,7 @@ class PyCharmRunEnvironment(VirtualRunEnv):
                 jinja_path = target.pop("jinja_path")
                 with open(jinja_path, "r") as f:
                     tm = Template(f.read())
-                    result = tm.render(env_vars = run_env._values, **target)
+                    result = tm.render(env_vars = run_env.vars(self._conanfile, scope=scope), **target)
                     file_name = f"{target['name']}.run.xml"
                     path = os.path.join(target['run_path'], file_name)
                     save(path, result)
@@ -47,3 +48,5 @@ class PyCharmRunEnvironment(VirtualRunEnv):
 class Pkg(ConanFile):
     name = "PyCharmRunEnvironment"
     version = "0.1"
+    default_user = "ultimaker"
+    default_channel = "testing"

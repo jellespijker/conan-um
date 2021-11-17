@@ -17,16 +17,16 @@ class VirtualEnvironmentBuildTool(object):
 
         self._build_tool = build_tool
 
-    def build(self, pip_deps = ""):
+    def generate(self, pip_deps = ""):
         if not self._conanfile.should_build:
             return
 
-        cmd = f"{self._build_tool} -m venv {self._conanfile.install_folder}"
+        cmd = f"{self._build_tool} -m venv {self._conanfile.generators_folder}"
         self._conanfile.run(cmd)
 
         if pip_deps != "":
             # FIXME: for windows
-            pip_cmd = f"source {self._conanfile.install_folder}/bin/activate && python -m pip install {pip_deps}"
+            pip_cmd = f"source {self._conanfile.generators_folder}/bin/activate && python -m pip install {pip_deps}"
             self._conanfile.run(pip_cmd)
 
     def install(self, build_type = None):
@@ -37,3 +37,5 @@ class VirtualEnvironmentBuildTool(object):
 class Pkg(ConanFile):
     name = "VirtualEnvironmentBuildTool"
     version = "0.1"
+    default_user = "ultimaker"
+    default_channel = "testing"
