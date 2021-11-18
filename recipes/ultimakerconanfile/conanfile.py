@@ -30,7 +30,7 @@ class UltimakerBase(object):
                 if "CURA-" in branch:
                     self.version += f"-a+{branch[5:9]}.{rev}"  # only use the Jira-ticket number
                 else:
-                    self.version += f"-a+{rev}"  # only use rev
+                    self.version += f"-a+{branch}.{rev}"  # only use rev
 
 
 class Pkg(ConanFile):
