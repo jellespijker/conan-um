@@ -9,7 +9,7 @@ class UltimakerBase(object):
         branch = str(git.get_branch()).replace("conan/", "")  # FIXME: after the switch to Conan
         rev = git.get_commit()[:6]
         if branch == "master":  # we're on master
-            self.version += f"-alpha+master_{rev}"
+            self.version += f"-a+{rev}"
         else:
             try:
                 branch_version = tools.Version(branch)
@@ -25,12 +25,12 @@ class UltimakerBase(object):
                     if tag_version:  # We're on an actual release
                         self.version = f"{tag_version.major}.{tag_version.minor}.{tag_version.patch}"
                     else:  # We're on a beta branch
-                        self.version = f"-beta+{rev}"
+                        self.version = f"-b+{rev}"
             else:  # We're on development branch
                 if "CURA-" in branch:
-                    self.version += f"-alpha+{branch[:9]}_{rev}"  # only use the Jira-ticket
+                    self.version += f"-a+{branch[5:9]}.{rev}"  # only use the Jira-ticket number
                 else:
-                    self.version += f"-alpha+{branch}_{rev}"
+                    self.version += f"-a+{rev}"  # only use rev
 
 
 class Pkg(ConanFile):
