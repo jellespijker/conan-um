@@ -45,8 +45,8 @@ class SipConan(ConanFile):
     build_policy = "missing"
     default_user = "riverbankcomputing"
     default_channel = "stable"
-    build_requires = "Python/3.8.10@python/stable"
-    requires = "Python/3.8.10@python/stable"
+    build_requires = "Python/3.10.0@python/stable"
+    requires = "Python/3.10.0@python/stable"
     options = {
         "shared": [True, False],
     }
