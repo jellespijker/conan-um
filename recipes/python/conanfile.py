@@ -13,7 +13,7 @@ required_conan_version = ">=1.42"
 
 class PythonConan(ConanFile):
     name = "Python"
-    version = "3.8.10"
+    version = "3.10.0"
     description = "The Python programming language"
     topics = ("conan", "python", "interpreter")
     license = "PSF 2.0"
