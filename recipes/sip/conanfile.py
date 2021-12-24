@@ -11,7 +11,7 @@ from conan.tools.microsoft.subsystems import subsystem_path, deduce_subsystem
 from conan.tools.files.packager import AutoPackager
 
 
-required_conan_version = ">=1.42"
+required_conan_version = ">=1.43"
 
 class AutoSIPtools(Autotools):
     # TODO: Check if there isn't an native solution for this, if not make FR at Conan
@@ -102,6 +102,5 @@ class SipConan(ConanFile):
         self.buildenv_info.append("PYTHONPATH", os.path.join(self.package_folder, "site-packages"))
         self.runenv_info.append("PATH", os.path.join(self.package_folder, "bin"))
         self.buildenv_info.append("PATH", os.path.join(self.package_folder, "bin"))
-        sipmacros_path = os.path.join(self.package_folder, "share", "cmake", "SIPMacros.cmake")
-        for build_module in ("cmake_find_package", "cmake_find_package_multi", "CMakeToolchain"):
-            self.cpp_info.build_modules[build_module].append(sipmacros_path)
+        sipmacros_path = os.path.join("share", "cmake", "SIPMacros.cmake")
+        self.cpp_info.set_property("cmake_build_modules", [f"{sipmacros_path}"])
